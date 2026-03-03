@@ -1,0 +1,619 @@
+{% extends 'Countryinfo_app/base.html' %}
+{% block title %}World Map{% endblock %}
+{% block nav_worldmap %}active{% endblock %}
+{% block extra_css %}
+<style>
+  #worldMapContainer {
+    position: relative;
+    height: calc(100vh - 200px);
+    min-height: 500px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  }
+  #worldMap {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  /* Sidebar panel */
+  #countryPanel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 320px;
+    max-width: calc(100vw - 32px);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    overflow: hidden;
+    display: none;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from {
+      transform: translateX(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  #panelHeader {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: white;
+    padding: 16px 20px 12px;
+    position: relative;
+  }
+  #panelHeader .flag-img {
+    width: 56px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+  }
+  #panelClose {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #panelClose:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  #panelBody {
+    padding: 14px 18px;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+  #panelBody::-webkit-scrollbar {
+    width: 4px;
+  }
+  #panelBody::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  #panelBody::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 99px;
+  }
+  .panel-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.83rem;
+  }
+  .panel-stat:last-child {
+    border-bottom: none;
+  }
+  .panel-stat .label {
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .panel-stat .value {
+    font-weight: 600;
+    color: #0f172a;
+    max-width: 55%;
+    text-align: right;
+  }
+  .panel-loader {
+    text-align: center;
+    padding: 30px;
+    color: #64748b;
+  }
+  .panel-loader .spinner-border {
+    color: #1e3a5f;
+  }
+  .panel-fact {
+    background: #f0fdf4;
+    border-left: 3px solid #0d9488;
+    border-radius: 0 8px 8px 0;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: #1e3a5f;
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+  /* Map hint */
+  #mapHint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.75);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-size: 0.82rem;
+    pointer-events: none;
+    z-index: 900;
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  /* Map loading overlay — covers map until GeoJSON is ready */
+  #mapLoadingOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1200;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    gap: 16px;
+    border-radius: 16px;
+  }
+  #mapLoadingOverlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+    color: #14b8a6;
+  }
+  #mapLoadingOverlay p {
+    font-size: 0.95rem;
+    opacity: 0.8;
+    margin: 0;
+  }
+  /* Zoom controls */
+  .leaflet-control-zoom {
+    border-radius: 10px !important;
+    overflow: hidden;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid px-3 py-2">
+  <!-- Page Header -->
+  <div
+    class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 fade-up"
+  >
+    <div>
+      <h2 class="section-title mb-0">
+        <i class="fas fa-map-marked-alt me-2" style="color: var(--accent)"></i
+        >Interactive World Map
+      </h2>
+      <p class="text-muted small mb-0 mt-1">
+        Click any country to see instant details — geography, population,
+        capital and more.
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a
+        href="{% url 'country_info' %}"
+        class="btn btn-sm"
+        style="
+          background: var(--primary);
+          color: white;
+          border-radius: 9px;
+          padding: 7px 16px;
+          font-size: 0.83rem;
+          font-weight: 600;
+        "
+      >
+        <i class="fas fa-search me-1"></i> Full Country Details
+      </a>
+      <a
+        href="{% url 'currency_exchange' %}"
+        class="btn btn-sm"
+        style="
+          background: var(--accent);
+          color: white;
+          border-radius: 9px;
+          padding: 7px 16px;
+          font-size: 0.83rem;
+          font-weight: 600;
+        "
+      >
+        <i class="fas fa-coins me-1"></i> Currency Exchange
+      </a>
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div id="worldMapContainer" class="fade-up">
+    <!-- Loading overlay — visible until GeoJSON is ready -->
+    <div id="mapLoadingOverlay">
+      <div class="spinner-border" role="status"></div>
+      <p>
+        <i class="fas fa-globe-americas me-2"></i>Loading world map data&hellip;
+      </p>
+    </div>
+
+    <div id="worldMap"></div>
+
+    <!-- Hint bar -->
+    <div id="mapHint">
+      <i class="fas fa-hand-pointer"></i>
+      <span>Click on any country to see details</span>
+    </div>
+
+    <!-- Country Detail Panel -->
+    <div id="countryPanel">
+      <div id="panelHeader">
+        <button id="panelClose" onclick="closePanel()" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="d-flex align-items-center gap-3">
+          <img
+            id="panelFlag"
+            src=""
+            alt=""
+            class="flag-img"
+            style="display: none"
+          />
+          <div>
+            <div
+              id="panelCountryName"
+              style="
+                font-weight: 700;
+                font-size: 1.1rem;
+                font-family: &quot;Poppins&quot;, sans-serif;
+              "
+            ></div>
+            <div
+              id="panelCapital"
+              style="font-size: 0.8rem; opacity: 0.8; margin-top: 2px"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div id="panelBody">
+        <div class="panel-loader" id="panelLoader">
+          <div class="spinner-border spinner-border-sm" role="status"></div>
+          <div class="mt-2">Loading country data…</div>
+        </div>
+        <div id="panelContent" style="display: none"></div>
+      </div>
+      <div
+        style="
+          padding: 10px 18px;
+          border-top: 1px solid #f1f5f9;
+          background: #fafafa;
+        "
+      >
+        <a
+          id="panelFullLink"
+          href="#"
+          class="btn btn-sm w-100"
+          style="
+            background: var(--primary);
+            color: white;
+            border-radius: 9px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 7px;
+          "
+        >
+          <i class="fas fa-external-link-alt me-1"></i> View Full Details
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // ── Initialise Leaflet map ──
+  var map = L.map("worldMap", {
+    center: [20, 0],
+    zoom: 2,
+    minZoom: 1,
+    maxZoom: 10,
+    zoomControl: true,
+    scrollWheelZoom: true,
+    worldCopyJump: true,
+  });
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+
+  // ── Style helpers ──
+  var defaultStyle = {
+    weight: 1,
+    color: "#ffffff",
+    fillColor: "#1e3a5f",
+    fillOpacity: 0.55,
+    dashArray: "",
+  };
+  var hoverStyle = {
+    weight: 2,
+    color: "#ffffff",
+    fillColor: "#0d9488",
+    fillOpacity: 0.8,
+  };
+  var selectedStyle = {
+    weight: 2,
+    color: "#ffffff",
+    fillColor: "#f59e0b",
+    fillOpacity: 0.85,
+  };
+  var currentLayer = null;
+
+  function resetStyle(layer) {
+    if (layer && layer !== currentLayer) {
+      layer.setStyle(defaultStyle);
+    }
+  }
+
+  // ── GeoJSON layer — use fast CloudFront CDN (naturalearth 50m) ──
+  var geojsonLayer;
+  var GEOJSON_URLS = [
+    "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson",
+    "https://rawcdn.githack.com/datasets/geo-countries/master/data/countries.geojson",
+  ];
+
+  function loadGeoJSON(urlIndex) {
+    if (urlIndex >= GEOJSON_URLS.length) {
+      document.getElementById("mapLoadingOverlay").innerHTML =
+        '<i class="fas fa-exclamation-triangle fa-2x" style="color:#f59e0b;"></i>' +
+        "<p>Could not load map data.<br><small>Check internet connection and refresh.</small></p>";
+      return;
+    }
+    fetch(GEOJSON_URLS[urlIndex])
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        geojsonLayer = L.geoJSON(data, {
+          style: defaultStyle,
+          onEachFeature: function (feature, layer) {
+            var name =
+              feature.properties.ADMIN ||
+              feature.properties.admin ||
+              feature.properties.NAME ||
+              feature.properties.name ||
+              "";
+            layer.on({
+              mouseover: function (e) {
+                if (e.target !== currentLayer) e.target.setStyle(hoverStyle);
+                e.target.bringToFront();
+              },
+              mouseout: function (e) {
+                if (e.target !== currentLayer)
+                  geojsonLayer.resetStyle(e.target);
+              },
+              click: function (e) {
+                if (currentLayer && currentLayer !== e.target)
+                  geojsonLayer.resetStyle(currentLayer);
+                currentLayer = e.target;
+                e.target.setStyle(selectedStyle);
+                loadCountry(name);
+              },
+            });
+            layer.bindTooltip(name, {
+              permanent: false,
+              direction: "auto",
+              className: "leaflet-tooltip",
+            });
+          },
+        }).addTo(map);
+        // Hide loading overlay and show hint
+        document.getElementById("mapLoadingOverlay").style.display = "none";
+        document.getElementById("mapHint").style.display = "flex";
+      })
+      .catch(function (err) {
+        console.warn("GeoJSON source " + urlIndex + " failed:", err);
+        loadGeoJSON(urlIndex + 1); // try next URL
+      });
+  }
+
+  loadGeoJSON(0);
+
+  // ── Panel functions ──
+  function closePanel() {
+    document.getElementById("countryPanel").style.display = "none";
+    if (currentLayer && geojsonLayer) {
+      geojsonLayer.resetStyle(currentLayer);
+      currentLayer = null;
+    }
+  }
+
+  function loadCountry(countryName) {
+    var panel = document.getElementById("countryPanel");
+    panel.style.display = "block";
+    document.getElementById("panelLoader").style.display = "block";
+    document.getElementById("panelContent").style.display = "none";
+    document.getElementById("panelCountryName").textContent = countryName;
+    document.getElementById("panelCapital").textContent = "";
+    document.getElementById("panelFlag").style.display = "none";
+    document.getElementById("mapHint").style.display = "none";
+
+    var apiUrl = "/api/country/" + encodeURIComponent(countryName) + "/";
+    fetch(apiUrl)
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (resp) {
+        if (resp.status === "error") {
+          document.getElementById("panelLoader").style.display = "none";
+          document.getElementById("panelContent").innerHTML =
+            '<p class="text-muted small text-center py-3"><i class="fas fa-exclamation-triangle me-1 text-warning"></i>' +
+            (resp.message || "Country not found") +
+            "</p>";
+          document.getElementById("panelContent").style.display = "block";
+        } else {
+          renderPanel(resp.data);
+        }
+      })
+      .catch(function () {
+        document.getElementById("panelLoader").style.display = "none";
+        document.getElementById("panelContent").innerHTML =
+          '<p class="text-muted small text-center py-3"><i class="fas fa-exclamation-triangle me-1 text-warning"></i>Could not load data for this country.</p>';
+        document.getElementById("panelContent").style.display = "block";
+      });
+  }
+
+  function fmt(val) {
+    if (val === null || val === undefined || val === "") return "—";
+    if (typeof val === "number") return val.toLocaleString();
+    return val;
+  }
+
+  function renderPanel(d) {
+    document.getElementById("panelLoader").style.display = "none";
+    document.getElementById("panelCountryName").textContent =
+      d.name || "Unknown";
+
+    if (d.capital)
+      document.getElementById("panelCapital").textContent =
+        "Capital: " + d.capital;
+    if (d.flag_url) {
+      var fi = document.getElementById("panelFlag");
+      fi.src = d.flag_url;
+      fi.style.display = "block";
+    }
+
+    // Set full-details link
+    var fullLink = document.getElementById("panelFullLink");
+    fullLink.href = "/country/?country=" + encodeURIComponent(d.name || "");
+    fullLink.onclick = function (e) {
+      e.preventDefault();
+      var form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/country/";
+      var csrf = document.createElement("input");
+      csrf.type = "hidden";
+      csrf.name = "csrfmiddlewaretoken";
+      csrf.value = getCookie("csrftoken");
+      var inp = document.createElement("input");
+      inp.type = "hidden";
+      inp.name = "country";
+      inp.value = d.name || "";
+      form.appendChild(csrf);
+      form.appendChild(inp);
+      document.body.appendChild(form);
+      form.submit();
+    };
+
+    var html = "";
+
+    // Stats
+    var stats = [
+      {
+        icon: "fa-users",
+        label: "Population",
+        val: d.population ? Number(d.population).toLocaleString() : "—",
+      },
+      {
+        icon: "fa-ruler-combined",
+        label: "Area",
+        val: d.area ? Number(d.area).toLocaleString() + " km²" : "—",
+      },
+      {
+        icon: "fa-language",
+        label: "Languages",
+        val: d.languages && d.languages.length ? d.languages.join(", ") : "—",
+      },
+      {
+        icon: "fa-coins",
+        label: "Currency",
+        val:
+          d.currencies && d.currencies.length
+            ? d.currencies
+                .map(function (c) {
+                  return c.code || c;
+                })
+                .join(", ")
+            : "—",
+      },
+      { icon: "fa-globe-americas", label: "Region", val: fmt(d.region) },
+      {
+        icon: "fa-map-pin",
+        label: "ISO Code",
+        val: d.iso
+          ? (d.iso.alpha2 || "") + (d.iso.alpha3 ? " / " + d.iso.alpha3 : "")
+          : "—",
+      },
+    ];
+
+    stats.forEach(function (s) {
+      html +=
+        '<div class="panel-stat"><span class="label"><i class="fas ' +
+        s.icon +
+        ' fa-fw" style="color:var(--accent);"></i>' +
+        s.label +
+        '</span><span class="value">' +
+        s.val +
+        "</span></div>";
+    });
+
+    // Borders
+    if (d.borders && d.borders.length) {
+      html +=
+        '<div class="mt-2 mb-1" style="font-size:0.78rem;color:#64748b;font-weight:600;">BORDERING COUNTRIES</div>';
+      html += "<div>";
+      d.borders.forEach(function (b) {
+        html +=
+          '<span style="background:#e8f0fe;color:#1d4ed8;border-radius:12px;padding:2px 9px;font-size:0.73rem;margin:2px;display:inline-block;">' +
+          b +
+          "</span>";
+      });
+      html += "</div>";
+    }
+
+    // Geo features
+    if (d.geo_features && Object.keys(d.geo_features).length) {
+      html +=
+        '<div class="mt-2 mb-1" style="font-size:0.78rem;color:#64748b;font-weight:600;">GEOGRAPHY</div>';
+      if (d.geo_features.highest_peak) {
+        html +=
+          '<div class="panel-fact"><i class="fas fa-mountain me-1"></i><strong>Highest Peak:</strong> ' +
+          d.geo_features.highest_peak[0] +
+          " (" +
+          d.geo_features.highest_peak[1].toLocaleString() +
+          " m)</div>";
+      }
+      if (d.geo_features.longest_river) {
+        html +=
+          '<div class="panel-fact"><i class="fas fa-water me-1"></i><strong>River:</strong> ' +
+          d.geo_features.longest_river +
+          "</div>";
+      }
+      if (d.geo_features.terrain) {
+        html +=
+          '<div class="panel-fact"><i class="fas fa-globe me-1"></i>' +
+          d.geo_features.terrain +
+          "</div>";
+      }
+    }
+
+    // Facts
+    if (d.facts && d.facts.length) {
+      html +=
+        '<div class="mt-2 mb-1" style="font-size:0.78rem;color:#64748b;font-weight:600;">DID YOU KNOW?</div>';
+      html +=
+        '<div class="panel-fact" style="background:#eff6ff;border-color:#3b82f6;"><i class="fas fa-lightbulb me-1" style="color:#f59e0b;"></i>' +
+        d.facts[0] +
+        "</div>";
+    }
+
+    document.getElementById("panelContent").innerHTML = html;
+    document.getElementById("panelContent").style.display = "block";
+  }
+
+  function getCookie(name) {
+    var v = document.cookie.match("(^|;) ?" + name + "=([^;]*)(;|$)");
+    return v ? v[2] : "";
+  }
+</script>
+{% endblock %}

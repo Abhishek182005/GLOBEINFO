@@ -1,0 +1,47 @@
+{% extends 'Countryinfo_app/base.html' %}
+
+{% block title %}Search Country{% endblock %}
+{% block nav_country_info %}active{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:560px; margin-top:3rem;">
+    <nav aria-label="breadcrumb" class="page-breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'landing_page' %}">Home</a></li>
+            <li class="breadcrumb-item active">Country Search</li>
+        </ol>
+    </nav>
+    <div class="card form-card fade-up">
+        <!-- Icon header -->
+        <div class="text-center mb-4">
+            <div style="width:68px;height:68px;border-radius:18px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;font-size:1.6rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                <i class="fas fa-globe-americas"></i>
+            </div>
+            <h2 class="section-title" style="font-size:1.6rem;">Search a Country</h2>
+            <p class="text-muted small">Enter a country name to get full details, flag &amp; interactive map</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <label class="form-label fw-600 mb-1" for="country">Country Name</label>
+            <div class="input-group mb-4">
+                <span class="input-group-text" style="background:#f0f4f8;border:2px solid #e2e8f0;border-right:none;border-radius:12px 0 0 12px;">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input class="form-control form-control-xl" type="text" name="country" id="country"
+                       placeholder="e.g. India, France, Japan..."
+                       list="countries-datalist" autocomplete="off"
+                       style="border-left:none;border-radius:0 12px 12px 0 !important;">
+            </div>
+            <datalist id="countries-datalist">
+                {% for c in all_countries %}<option value="{{ c }}">{% endfor %}
+            </datalist>
+            <button type="submit" class="btn btn-glob-primary w-100" style="height:50px;font-size:1rem;">
+                <i class="fas fa-search me-2"></i>Get Country Info
+            </button>
+        </form>
+        <div class="text-center mt-4">
+            <small class="text-muted">Want to compare? <a href="{% url 'country_compare' %}" class="text-primary">Compare two countries &rarr;</a></small>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,648 @@
+{% extends 'Countryinfo_app/base.html' %}
+{% block title %}{{ name }}{% endblock %}
+{% block nav_country_info %}active{% endblock %}
+{% block extra_css %}
+<style>
+  .country-hero-banner {
+    position: relative;
+    overflow: hidden;
+  }
+  .country-hero-banner::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -10%;
+    width: 350px;
+    height: 100%;
+    background: radial-gradient(
+      ellipse,
+      rgba(20, 184, 166, 0.12) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+  .info-section-card .card-body {
+    padding: 0 1.25rem;
+  }
+  .province-badge {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1d4ed8;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin: 2px;
+  }
+  .border-badge {
+    display: inline-block;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin: 2px;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container py-2">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="page-breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'landing_page' %}">Home</a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'country_info' %}">Country Search</a>
+      </li>
+      <li class="breadcrumb-item active">{{ name }}</li>
+    </ol>
+  </nav>
+
+  <!-- ── Hero Banner ── -->
+  <div class="country-hero-banner fade-up mb-4">
+    <div class="row align-items-center gy-3">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+          {% if flag_url %}
+          <img
+            src="{{ flag_url }}"
+            alt="{{ name }} flag"
+            class="flag-img"
+            style="width: 120px; height: 80px; object-fit: cover"
+          />
+          {% endif %}
+          <div>
+            <h1
+              style="
+                font-family: &quot;Poppins&quot;, sans-serif;
+                font-weight: 800;
+                font-size: 2.4rem;
+                color: white;
+                margin: 0;
+              "
+            >
+              {{ name }}
+            </h1>
+            {% if native_name and native_name != name %}
+            <p
+              style="
+                color: rgba(255, 255, 255, 0.65);
+                font-size: 1rem;
+                margin: 4px 0 0;
+              "
+            >
+              {{ native_name }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          {% if capital %}
+          <span
+            class="badge"
+            style="
+              background: rgba(255, 255, 255, 0.15);
+              color: white;
+              border-radius: 8px;
+              padding: 5px 12px;
+              font-size: 0.82rem;
+            "
+          >
+            <i class="fas fa-city me-1" style="color: #14b8a6"></i>{{ capital }}
+          </span>
+          {% endif %} {% if region %}
+          <span
+            class="badge"
+            style="
+              background: rgba(255, 255, 255, 0.15);
+              color: white;
+              border-radius: 8px;
+              padding: 5px 12px;
+              font-size: 0.82rem;
+            "
+          >
+            <i class="fas fa-globe me-1" style="color: #14b8a6"></i>{{ region }}
+          </span>
+          {% endif %} {% if iso.alpha2 %}
+          <span
+            class="badge"
+            style="
+              background: rgba(255, 255, 255, 0.15);
+              color: white;
+              border-radius: 8px;
+              padding: 5px 12px;
+              font-size: 0.82rem;
+            "
+          >
+            <i class="fas fa-id-badge me-1" style="color: #14b8a6"></i>{{
+            iso.alpha2 }} / {{ iso.alpha3 }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a
+          href="{% url 'country_info' %}"
+          class="btn btn-sm me-2"
+          style="
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+          "
+        >
+          <i class="fas fa-search me-1"></i>New Search
+        </a>
+        <a
+          href="{% url 'country_compare' %}"
+          class="btn btn-sm"
+          style="
+            background: #0d9488;
+            color: white;
+            border-radius: 10px;
+            border: none;
+          "
+        >
+          <i class="fas fa-exchange-alt me-1"></i>Compare
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- ── Left Column: Info Cards ── -->
+    <div class="col-lg-5">
+      <!-- Geography Card -->
+      <div class="card info-section-card mb-4 fade-up">
+        <div class="info-card-header">
+          <i class="fas fa-map-marker-alt"></i> Geography
+        </div>
+        <div class="card-body py-2">
+          <div class="info-row">
+            <span class="info-label">Region</span>
+            <span class="info-value">{{ region|default:"—" }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Subregion</span>
+            <span class="info-value">{{ subregion|default:"—" }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Area</span>
+            <span class="info-value">{% if area %}{{ area|floatformat:"0" }} km²{% else %}—{% endif %}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Coordinates</span>
+            <span class="info-value">
+              {% if latlng %}{{ latlng.0 }}°, {{ latlng.1 }}°{% else %}—{% endif %}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Top-Level Domain</span>
+            <span class="info-value">{{ tld.0|default:"—" }}</span>
+          </div>
+          {% if borders %}
+          <div class="info-row">
+            <span class="info-label">Borders</span>
+            <span class="info-value">
+              {% for b in borders %}
+              <a
+                href="{% url 'country_info' %}?country={{ b|urlencode }}"
+                class="border-badge"
+                style="text-decoration: none; cursor: pointer"
+                title="View {{ b }}"
+                >{{ b }}</a
+              >
+              {% endfor %}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- People & Culture Card -->
+      <div class="card info-section-card mb-4 fade-up">
+        <div class="info-card-header">
+          <i class="fas fa-users"></i> People &amp; Culture
+        </div>
+        <div class="card-body py-2">
+          <div class="info-row">
+            <span class="info-label">Population</span>
+            <span class="info-value fw-bold">{% if population %}{{ population|floatformat:"0" }}{% else %}—{% endif %}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Demonym</span>
+            <span class="info-value">{{ demonym|default:"—" }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Languages</span>
+            <span class="info-value">
+              {% for lang in languages %}{{ lang|upper }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Native Name</span>
+            <span class="info-value">{{ native_name|default:"—" }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Other Names</span>
+            <span class="info-value" style="font-size: 0.85rem">
+              {% for s in alt_spellings %}{{ s }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Economy & Practical Card -->
+      <div class="card info-section-card mb-4 fade-up">
+        <div class="info-card-header">
+          <i class="fas fa-coins"></i> Economy &amp; Practical
+        </div>
+        <div class="card-body py-2">
+          <div class="info-row">
+            <span class="info-label">Currency</span>
+            <span class="info-value">
+              {% for cur in currencies_detail %}{{ cur.name }} ({{ cur.code }}){% if cur.symbol %} {{ cur.symbol }}{% endif %}{% if not forloop.last %}; {% endif %}{% empty %}{% for c in currencies %}{{ c }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}{% endfor %}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Calling Codes</span>
+            <span class="info-value">
+              {% for code in calling_codes %}+{{ code }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Timezones</span>
+            <span class="info-value" style="font-size: 0.85rem">
+              {% for tz in timezones %}{{ tz }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+            </span>
+          </div>
+          {% if wiki %}
+          <div class="info-row">
+            <span class="info-label">Wikipedia</span>
+            <span class="info-value">
+              <a
+                href="{{ wiki }}"
+                target="_blank"
+                style="color: var(--primary-light)"
+              >
+                <i class="fab fa-wikipedia-w me-1"></i>Open Wikipedia
+              </a>
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right Column: Map + Provinces ── -->
+    <div class="col-lg-7">
+      <!-- Map -->
+      {% if latlng %}
+      <div class="card mb-4 fade-up">
+        <div class="info-card-header">
+          <i class="fas fa-map-marked-alt"></i> Location Map
+        </div>
+        <div class="card-body p-0">
+          <div class="map-container">
+            <div id="countryMap"></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Provinces / States -->
+      {% if provinces %}
+      <div class="card fade-up">
+        <div class="info-card-header">
+          <i class="fas fa-layer-group"></i> Provinces / States
+          <span
+            class="badge ms-auto"
+            style="background: rgba(255, 255, 255, 0.2); font-weight: 500"
+            >{{ provinces|length }}</span
+          >
+        </div>
+        <div class="card-body">
+          <div class="accordion accordion-flush" id="provincesAccordion">
+            <div class="accordion-item" style="border: none">
+              <h2 class="accordion-header">
+                <button
+                  class="accordion-button collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#provincesBody"
+                  style="
+                    background: #f8fafc;
+                    border-radius: 10px;
+                    font-size: 0.88rem;
+                    font-weight: 600;
+                  "
+                >
+                  Show all {{ provinces|length }} provinces / states
+                </button>
+              </h2>
+              <div id="provincesBody" class="accordion-collapse collapse">
+                <div class="accordion-body" style="padding: 1rem 0">
+                  {% for province in provinces %}
+                  <span class="province-badge">{{ province }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Geographical Features & Interesting Facts ── -->
+  {% if geo_features or facts %}
+  <div class="row g-4 mt-1 mb-1">
+    {% if geo_features %}
+    <div class="col-lg-6">
+      <div class="card info-section-card h-100">
+        <div class="info-card-header">
+          <i class="fas fa-mountain"></i> Geographical Features
+        </div>
+        <div class="card-body py-3">
+          {% if geo_features.highest_peak %}
+          <div
+            class="d-flex justify-content-between align-items-center py-2 border-bottom"
+          >
+            <span class="text-muted small"
+              ><i class="fas fa-mountain me-2 text-primary"></i>Highest
+              Peak</span
+            >
+            <span class="fw-semibold text-end"
+              >{{ geo_features.highest_peak.0 }}<br />
+              <small class="text-muted"
+                >{{ geo_features.highest_peak.1|floatformat:0 }} m</small
+              >
+            </span>
+          </div>
+          {% endif %} {% if geo_features.longest_river %}
+          <div
+            class="d-flex justify-content-between align-items-center py-2 border-bottom"
+          >
+            <span class="text-muted small"
+              ><i class="fas fa-water me-2 text-info"></i>Longest River</span
+            >
+            <span class="fw-semibold">{{ geo_features.longest_river }}</span>
+          </div>
+          {% endif %} {% if geo_features.coastline_km %}
+          <div
+            class="d-flex justify-content-between align-items-center py-2 border-bottom"
+          >
+            <span class="text-muted small"
+              ><i class="fas fa-anchor me-2 text-secondary"></i>Coastline</span
+            >
+            <span class="fw-semibold"
+              >{{ geo_features.coastline_km|floatformat:0 }} km</span
+            >
+          </div>
+          {% endif %} {% if geo_features.terrain %}
+          <div
+            class="d-flex justify-content-between align-items-center py-2 border-bottom"
+          >
+            <span class="text-muted small"
+              ><i class="fas fa-globe me-2 text-success"></i>Terrain</span
+            >
+            <span
+              class="fw-semibold text-end"
+              style="max-width: 60%; font-size: 0.85rem"
+              >{{ geo_features.terrain }}</span
+            >
+          </div>
+          {% endif %} {% if geo_features.climate %}
+          <div
+            class="d-flex justify-content-between align-items-center py-2 border-bottom"
+          >
+            <span class="text-muted small"
+              ><i class="fas fa-cloud-sun me-2 text-warning"></i>Climate</span
+            >
+            <span
+              class="fw-semibold text-end"
+              style="max-width: 60%; font-size: 0.85rem"
+              >{{ geo_features.climate }}</span
+            >
+          </div>
+          {% endif %} {% if geo_features.natural_resources %}
+          <div class="d-flex justify-content-between align-items-center py-2">
+            <span class="text-muted small"
+              ><i class="fas fa-gem me-2" style="color: #8b5cf6"></i
+              >Resources</span
+            >
+            <span
+              class="fw-semibold text-end"
+              style="max-width: 60%; font-size: 0.85rem"
+              >{{ geo_features.natural_resources }}</span
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %} {% if facts %}
+    <div class="col-lg-{% if geo_features %}6{% else %}12{% endif %}">
+      <div class="card info-section-card h-100">
+        <div
+          class="info-card-header"
+          style="
+            background: linear-gradient(135deg, #0d9488, #0891b2) !important;
+          "
+        >
+          <i class="fas fa-lightbulb"></i> Interesting Facts about {{ name }}
+        </div>
+        <div class="card-body py-3">
+          <ol class="ps-3 mb-0" style="line-height: 2">
+            {% for fact in facts %}
+            <li class="mb-2" style="font-size: 0.89rem">{{ fact }}</li>
+            {% endfor %}
+          </ol>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── Economic & Military Metrics ── -->
+  <div class="row g-4 mt-0">
+
+    <!-- Economic Indicators -->
+    <div class="col-lg-6 fade-up">
+      <div class="card info-section-card h-100">
+        <div class="info-card-header" style="background:linear-gradient(135deg,#1e3a5f,#0d9488)!important;">
+          <i class="fas fa-chart-line"></i> Economic Indicators
+          {% if extra.gdp_billion %}<small class="ms-2 opacity-75" style="font-size:0.72rem;font-weight:400;">World Bank / IMF 2024</small>{% endif %}
+        </div>
+        <div class="card-body py-3">
+
+          <!-- GDP bar -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="feature-label mb-0">GDP (Nominal)</span>
+              <span class="fw-bold" style="color:var(--primary);">
+                {% if extra.gdp_billion %}${{ extra.gdp_billion|floatformat:0 }}B USD{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}
+              </span>
+            </div>
+            {% if extra.gdp_billion %}
+            <div class="progress" style="height:6px;border-radius:4px;">
+              <div class="progress-bar" style="width:{% widthratio extra.gdp_billion 30000 100 %}%;background:linear-gradient(90deg,#1e3a5f,#0d9488);border-radius:4px;"></div>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="features-grid" style="gap:0;">
+            <div class="feature-item">
+              <span class="feature-label">GDP per Capita</span>
+              <span class="fw-semibold text-end">{% if extra.gdp_per_capita %}${{ extra.gdp_per_capita|floatformat:0 }}{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}</span>
+            </div>
+
+            <!-- HDI bar -->
+            <div class="feature-item flex-column align-items-start" style="gap:4px;">
+              <div class="d-flex justify-content-between w-100">
+                <span class="feature-label mb-0">Human Dev. Index (HDI)</span>
+                <span class="fw-semibold">
+                  {% if extra.hdi %}{{ extra.hdi }}{% if extra.hdi_rank %} <small class="text-muted">#{{ extra.hdi_rank }}</small>{% endif %}{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}
+                </span>
+              </div>
+              {% if extra.hdi %}
+              <div class="progress w-100" style="height:6px;border-radius:4px;">
+                <div class="progress-bar" style="width:{% widthratio extra.hdi 1 100 %}%;background:{% if extra.hdi >= 0.8 %}#16a34a{% elif extra.hdi >= 0.6 %}#d97706{% else %}#ef4444{% endif %};border-radius:4px;"></div>
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="feature-item">
+              <span class="feature-label">Gini Coefficient</span>
+              <span class="fw-semibold text-end">{% if extra.gini %}{{ extra.gini }} <small class="text-muted">(0=equal, 100=unequal)</small>{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-label">Unemployment Rate</span>
+              <span class="fw-semibold text-end">{% if extra.unemployment %}{{ extra.unemployment }}%{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-label">Inflation (CPI)</span>
+              <span class="fw-semibold text-end">{% if extra.inflation %}{{ extra.inflation }}%{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Military Power -->
+    <div class="col-lg-6 fade-up">
+      <div class="card info-section-card h-100">
+        <div class="info-card-header" style="background:linear-gradient(135deg,#7f1d1d,#991b1b)!important;">
+          <i class="fas fa-shield-alt"></i> Military Power
+          {% if extra.gfp_rank %}<small class="ms-2 opacity-75" style="font-size:0.72rem;font-weight:400;">Global Firepower 2024</small>{% endif %}
+        </div>
+        <div class="card-body py-3">
+
+          {% if extra.gfp_rank %}
+          <!-- GFP rank badge -->
+          <div class="text-center mb-3 py-2" style="background:rgba(185,28,28,0.07);border-radius:10px;">
+            <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">Global Firepower Rank</div>
+            <div style="font-size:2rem;font-weight:900;color:#b91c1c;line-height:1.2;">#{{ extra.gfp_rank }}</div>
+            <div style="font-size:0.75rem;color:#64748b;">out of 145 countries ranked</div>
+          </div>
+          {% else %}
+          <div class="text-center mb-3 py-2" style="background:#f8fafc;border-radius:10px;">
+            <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;">Global Firepower Rank</div>
+            <div class="mt-1"><span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span></div>
+          </div>
+          {% endif %}
+
+          <div class="features-grid" style="gap:0;">
+            <div class="feature-item">
+              <span class="feature-label"><i class="fas fa-user-soldier me-1" style="color:#ef4444;"></i>Active Personnel</span>
+              <span class="fw-semibold text-end">{% if extra.military_active %}{{ extra.military_active|floatformat:0 }}K{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-label"><i class="fas fa-users me-1" style="color:#f59e0b;"></i>Reserve Personnel</span>
+              <span class="fw-semibold text-end">{% if extra.military_reserve %}{{ extra.military_reserve|floatformat:0 }}K{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-label"><i class="fas fa-dollar-sign me-1" style="color:#ef4444;"></i>Defence Budget</span>
+              <span class="fw-semibold text-end">{% if extra.military_budget %}${{ extra.military_budget }}B{% else %}<span style="font-size:0.72rem;color:#94a3b8;background:#f1f5f9;border-radius:6px;padding:2px 8px;font-style:italic;">No data available</span>{% endif %}</span>
+            </div>
+          </div>
+
+          {% if extra.military_active and extra.military_reserve %}
+          <!-- Personnel visual breakdown -->
+          <div class="mt-3 p-2" style="background:#f8fafc;border-radius:8px;">
+            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;font-weight:700;margin-bottom:6px;">Personnel Breakdown</div>
+            <div class="d-flex gap-3 justify-content-around text-center">
+              <div>
+                <div style="font-size:1.15rem;font-weight:800;color:#ef4444;">{{ extra.military_active|floatformat:0 }}K</div>
+                <div style="font-size:0.72rem;color:#64748b;">Active</div>
+              </div>
+              <div style="color:#e2e8f0;font-size:1.2rem;">|</div>
+              <div>
+                <div style="font-size:1.15rem;font-weight:800;color:#f59e0b;">{{ extra.military_reserve|floatformat:0 }}K</div>
+                <div style="font-size:0.72rem;color:#64748b;">Reserve</div>
+              </div>
+              <div style="color:#e2e8f0;font-size:1.2rem;">|</div>
+              <div>
+                <div style="font-size:1.15rem;font-weight:800;color:#1d4ed8;">{% widthratio extra.military_active 1 1 %}K + {{ extra.military_reserve|floatformat:0 }}K</div>
+                <div style="font-size:0.72rem;color:#64748b;">Total</div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if not extra.gfp_rank and not extra.military_active %}
+          <p class="text-muted text-center small mt-2 mb-0"><i class="fas fa-info-circle me-1"></i>Detailed military data not available for this country.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="d-flex flex-wrap gap-2 mt-3 mb-2">
+    <a href="{% url 'country_info' %}" class="btn btn-glob-primary">
+      <i class="fas fa-search me-2"></i>Search Another Country
+    </a>
+    <a href="{% url 'country_compare' %}" class="btn btn-glob-secondary">
+      <i class="fas fa-exchange-alt me-2"></i>Compare Countries
+    </a>
+    <a
+      href="{% url 'landing_page' %}"
+      class="btn"
+      style="
+        border: 2px solid #64748b;
+        color: #64748b;
+        border-radius: 10px;
+        padding: 9px 20px;
+        font-weight: 600;
+      "
+    >
+      <i class="fas fa-home me-2"></i>Home
+    </a>
+  </div>
+</div>
+{% endblock %} {% block extra_js %} {% if latlng %}
+<script>
+  (function(){
+      var lat = {{ latlng.0 }};
+      var lng = {{ latlng.1 }};
+      var map = L.map('countryMap', { zoomControl: true, scrollWheelZoom: false }).setView([lat, lng], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+      var marker = L.marker([lat, lng]).addTo(map);
+      marker.bindPopup(
+          '<div style="text-align:center;padding:4px 6px;">' +
+          '<strong style="font-size:0.95rem;">{{ name }}</strong>' +
+          '{% if capital %}<br><span style="color:#64748b;font-size:0.82rem;">Capital: {{ capital }}</span>{% endif %}' +
+          '</div>'
+      ).openPopup();
+  })();
+</script>
+{% endif %} {% endblock %}

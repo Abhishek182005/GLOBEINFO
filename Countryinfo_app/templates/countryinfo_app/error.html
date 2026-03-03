@@ -1,0 +1,25 @@
+{% extends 'Countryinfo_app/base.html' %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:520px;margin-top:4rem;text-align:center;">
+    <div class="card p-5 fade-up">
+        <div style="font-size:4rem;margin-bottom:1rem;">🌍</div>
+        <h1 class="section-title mb-3" style="font-size:1.8rem;">Oops! Something went wrong</h1>
+        <div class="alert" style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ error_message }}
+        </div>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            {% if retry_url == 'country_info' %}
+                <a href="{% url 'country_info' %}" class="btn btn-glob-primary"><i class="fas fa-redo me-2"></i>Try Again</a>
+            {% elif retry_url == 'country_compare' %}
+                <a href="{% url 'country_compare' %}" class="btn btn-glob-primary"><i class="fas fa-redo me-2"></i>Try Again</a>
+            {% else %}
+                <a href="{% url 'landing_page' %}" class="btn btn-glob-primary"><i class="fas fa-home me-2"></i>Go Home</a>
+            {% endif %}
+            <a href="{% url 'landing_page' %}" class="btn btn-glob-secondary"><i class="fas fa-home me-2"></i>Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

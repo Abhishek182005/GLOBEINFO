@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}GlobeInfo{% endblock %} | GlobeInfo</title>
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'images/FAVICON.png' %}" />
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" />
+    <!-- Font Awesome 6 -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    {% block extra_css %}{% endblock %}
+    <style>
+      :root {
+        --primary: #1e3a5f;
+        --primary-light: #2563eb;
+        --accent: #0d9488;
+        --accent-light: #14b8a6;
+        --dark: #0f172a;
+        --light: #f8fafc;
+        --text-muted-color: #64748b;
+        --border-color: #e2e8f0;
+        --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f0f4f8;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        color: var(--dark);
+      }
+      /* ── Navbar ── */
+      .main-navbar {
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e3a5f 100%
+        ) !important;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+        padding: 0.85rem 0;
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+      }
+      .navbar-brand-custom {
+        font-family: "Poppins", sans-serif;
+        font-weight: 700;
+        font-size: 1.4rem;
+        color: #fff !important;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .navbar-brand-custom .brand-globe {
+        color: var(--accent-light);
+        font-size: 1.5rem;
+      }
+      .navbar-brand-custom .brand-text span {
+        color: var(--accent-light);
+      }
+      .nav-link-custom {
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-weight: 500;
+        font-size: 0.9rem;
+        padding: 0.45rem 1rem !important;
+        border-radius: 8px;
+        transition:
+          background 0.2s,
+          color 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .nav-link-custom:hover,
+      .nav-link-custom.active {
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.15);
+      }
+      /* ── Layout ── */
+      .main-content {
+        flex: 1;
+        padding: 2rem 0 3rem;
+      }
+      /* ── Cards ── */
+      .card {
+        border: 1px solid var(--border-color) !important;
+        border-radius: 16px !important;
+        box-shadow: var(--card-shadow);
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease;
+      }
+      .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 36px rgba(0, 0, 0, 0.13);
+      }
+      /* ── Section title ── */
+      .section-title {
+        font-family: "Poppins", sans-serif;
+        font-weight: 700;
+        color: var(--primary);
+      }
+      /* ── Stat Cards ── */
+      .stat-card {
+        text-align: center;
+        padding: 1.75rem 1rem;
+        background: linear-gradient(135deg, #1e3a5f, #2563eb);
+        color: white;
+        border-radius: 16px;
+        border: none !important;
+      }
+      .stat-card .stat-value {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--accent-light);
+        font-family: "Poppins", sans-serif;
+      }
+      .stat-card .stat-label {
+        font-size: 0.82rem;
+        opacity: 0.85;
+        margin-top: 4px;
+      }
+      /* ── Flag Image ── */
+      .flag-img {
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        object-fit: cover;
+      }
+      /* ── Info Items ── */
+      .info-card-header {
+        background: linear-gradient(135deg, var(--primary), #1e3a8a) !important;
+        color: white !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 0.85rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.3px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .info-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 0;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted-color);
+        font-weight: 600;
+      }
+      .info-value {
+        font-weight: 500;
+        color: var(--dark);
+      }
+      /* ── Map ── */
+      .map-container {
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+      }
+      #countryMap,
+      #compareMap {
+        height: 380px;
+        width: 100%;
+      }
+      /* ── Country Hero Banner ── */
+      .country-hero-banner {
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e3a5f 60%,
+          #1e3a8a 100%
+        );
+        color: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+      }
+      /* ── Breadcrumb ── */
+      .page-breadcrumb {
+        margin-bottom: 1.25rem;
+      }
+      .page-breadcrumb a {
+        color: var(--primary-light);
+        text-decoration: none;
+      }
+      .page-breadcrumb a:hover {
+        text-decoration: underline;
+      }
+      /* ── Table Modern ── */
+      .table-modern thead th {
+        background: linear-gradient(135deg, var(--primary), #1e3a8a);
+        color: white;
+        font-weight: 600;
+        padding: 13px 16px;
+        border: none;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .table-modern td,
+      .table-modern th {
+        padding: 11px 16px;
+        vertical-align: middle;
+        border-color: var(--border-color);
+      }
+      .table-modern tbody tr:hover {
+        background: #f0f7ff;
+      }
+      /* ── Buttons ── */
+      .btn-glob-primary {
+        background: linear-gradient(135deg, var(--primary-light), #1d4ed8);
+        border: none;
+        color: white;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+      .btn-glob-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+        color: white;
+      }
+      .btn-glob-secondary {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        padding: 9px 22px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+      .btn-glob-secondary:hover {
+        background: var(--primary);
+        color: white;
+      }
+      /* ── Badge for continent ── */
+      .badge-africa {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .badge-asia {
+        background: #fff3e0;
+        color: #e65100;
+      }
+      .badge-europe {
+        background: #e3f2fd;
+        color: #0d47a1;
+      }
+      .badge-americas {
+        background: #fce4ec;
+        color: #880e4f;
+      }
+      .badge-oceania {
+        background: #e0f2f1;
+        color: #004d40;
+      }
+      .badge-continent {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+      /* ── Form Styles ── */
+      .form-card {
+        background: white;
+        border-radius: 20px !important;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12) !important;
+        padding: 2.5rem;
+      }
+      .form-control-xl {
+        height: 52px;
+        font-size: 1rem;
+        border-radius: 12px !important;
+        border: 2px solid var(--border-color) !important;
+        padding: 0 16px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .form-control-xl:focus {
+        border-color: var(--primary-light) !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+        outline: none;
+      }
+      /* ── Footer ── */
+      .site-footer {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+        color: rgba(255, 255, 255, 0.7);
+        padding: 2.5rem 0 1.5rem;
+        margin-top: auto;
+      }
+      .site-footer a {
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .site-footer a:hover {
+        color: var(--accent-light);
+      }
+      .footer-title {
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+      }
+      .footer-hr {
+        border-color: rgba(255, 255, 255, 0.1);
+        margin: 1.5rem 0 1rem;
+      }
+      /* ── Pop-in animation ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-up {
+        animation: fadeUp 0.45s ease both;
+      }
+      @media (max-width: 768px) {
+        .country-hero-banner {
+          padding: 1.5rem;
+        }
+        .main-content {
+          padding: 1.25rem 0 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── Navbar ── -->
+    <nav class="main-navbar navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand-custom" href="{% url 'landing_page' %}">
+          <i class="fas fa-globe-americas brand-globe"></i>
+          <div class="brand-text">Globe<span>Info</span></div>
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNav"
+          aria-label="Toggle navigation"
+          style="color: white"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+            <li class="nav-item">
+              <a
+                class="nav-link-custom {% block nav_country_info %}{% endblock %}"
+                href="{% url 'country_info' %}"
+              >
+                <i class="fas fa-search"></i> Country Info
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link-custom {% block nav_compare %}{% endblock %}"
+                href="{% url 'country_compare' %}"
+              >
+                <i class="fas fa-exchange-alt"></i> Compare
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link-custom {% block nav_capitals %}{% endblock %}"
+                href="{% url 'country_and_capitals' %}"
+              >
+                <i class="fas fa-list"></i> All Countries
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link-custom {% block nav_worldmap %}{% endblock %}"
+                href="{% url 'world_map' %}"
+              >
+                <i class="fas fa-map-marked-alt"></i> World Map
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link-custom {% block nav_currency %}{% endblock %}"
+                href="{% url 'currency_exchange' %}"
+              >
+                <i class="fas fa-coins"></i> Currency
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link-custom {% block nav_records %}{% endblock %}"
+                href="{% url 'world_records' %}"
+              >
+                <i class="fas fa-trophy"></i> World Records
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ── Main Content ── -->
+    <main class="main-content">{% block content %}{% endblock %}</main>
+
+    <!-- ── Footer ── -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="footer-title">
+              <i
+                class="fas fa-globe-americas me-2"
+                style="color: var(--accent-light)"
+              ></i
+              >GlobeInfo
+            </div>
+            <p class="small">
+              Your one-stop destination for comprehensive country data,
+              interactive maps, and side-by-side comparisons.
+            </p>
+          </div>
+          <div class="col-md-3">
+            <div class="footer-title">Explore</div>
+            <ul class="list-unstyled small">
+              <li class="mb-1">
+                <a href="{% url 'country_info' %}"
+                  ><i
+                    class="fas fa-chevron-right me-1"
+                    style="font-size: 0.65rem; opacity: 0.6"
+                  ></i
+                  >Country Info</a
+                >
+              </li>
+              <li class="mb-1">
+                <a href="{% url 'country_compare' %}"
+                  ><i
+                    class="fas fa-chevron-right me-1"
+                    style="font-size: 0.65rem; opacity: 0.6"
+                  ></i
+                  >Compare Countries</a
+                >
+              </li>
+              <li class="mb-1">
+                <a href="{% url 'country_and_capitals' %}"
+                  ><i
+                    class="fas fa-chevron-right me-1"
+                    style="font-size: 0.65rem; opacity: 0.6"
+                  ></i
+                  >All Countries List</a
+                >
+              </li>
+              <li class="mb-1">
+                <a href="{% url 'world_map' %}"
+                  ><i
+                    class="fas fa-chevron-right me-1"
+                    style="font-size: 0.65rem; opacity: 0.6"
+                  ></i
+                  >World Map</a
+                >
+              </li>
+              <li class="mb-1">
+                <a href="{% url 'currency_exchange' %}"
+                  ><i
+                    class="fas fa-chevron-right me-1"
+                    style="font-size: 0.65rem; opacity: 0.6"
+                  ></i
+                  >Currency Exchange</a
+                >
+              </li>
+              <li class="mb-1">
+                <a href="{% url 'world_records' %}"
+                  ><i
+                    class="fas fa-chevron-right me-1"
+                    style="font-size: 0.65rem; opacity: 0.6"
+                  ></i
+                  >World Records</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <div class="footer-title">Data Includes</div>
+            <ul class="list-unstyled small">
+              <li class="mb-1">
+                <i
+                  class="fas fa-check me-2"
+                  style="color: var(--accent-light)"
+                ></i
+                >Capitals &amp; Currencies
+              </li>
+              <li class="mb-1">
+                <i
+                  class="fas fa-check me-2"
+                  style="color: var(--accent-light)"
+                ></i
+                >Population &amp; Area
+              </li>
+              <li class="mb-1">
+                <i
+                  class="fas fa-check me-2"
+                  style="color: var(--accent-light)"
+                ></i
+                >Languages &amp; Timezones
+              </li>
+              <li class="mb-1">
+                <i
+                  class="fas fa-check me-2"
+                  style="color: var(--accent-light)"
+                ></i
+                >Interactive Leaflet Maps
+              </li>
+              <li class="mb-1">
+                <i
+                  class="fas fa-check me-2"
+                  style="color: var(--accent-light)"
+                ></i
+                >Country Flags
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-2">
+            <div class="footer-title">Built With</div>
+            <small class="d-block">Django 5</small>
+            <small class="d-block">Bootstrap 5</small>
+            <small class="d-block">Leaflet.js</small>
+            <small class="d-block">Chart.js</small>
+          </div>
+        </div>
+        <hr class="footer-hr" />
+        <div class="d-flex justify-content-between flex-wrap gap-2 small">
+          <span>&copy; 2026 GlobeInfo. All rights reserved.</span>
+          <span
+            >Data via
+            <a href="https://pypi.org/project/countryinfo/" target="_blank"
+              >countryinfo</a
+            >
+            &amp;
+            <a href="https://flagcdn.com" target="_blank">FlagCDN</a></span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

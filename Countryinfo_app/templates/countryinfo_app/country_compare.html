@@ -1,0 +1,507 @@
+{% extends 'Countryinfo_app/base.html' %}
+
+{% block title %}{{ country1.name }} vs {{ country2.name }}{% endblock %}
+{% block nav_compare %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vs-divider {
+        display: flex; align-items: center; justify-content: center;
+    }
+    .vs-badge {
+        background: linear-gradient(135deg,#1e3a5f,#2563eb);
+        color: white; border-radius: 50%; width: 48px; height: 48px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 0.9rem; flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(37,99,235,0.4);
+    }
+    .c1-header { background: linear-gradient(135deg, #1e3a5f, #2563eb) !important; }
+    .c2-header { background: linear-gradient(135deg, #14532d, #16a34a) !important; }
+    .compare-row {
+        display: grid; grid-template-columns: 1fr max-content 1fr;
+        gap: 0; padding: 10px 0; border-bottom: 1px solid #e2e8f0;
+        align-items: center;
+    }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-label {
+        text-align: center; font-size: 0.72rem; text-transform: uppercase;
+        letter-spacing: 0.5px; color: #64748b; font-weight: 700;
+        padding: 2px 4px; white-space: nowrap;
+    }
+    .section-divider {
+        grid-column: 1 / -1; background: linear-gradient(90deg,#e2e8f0,#cbd5e1,#e2e8f0);
+        text-align: center; font-size:0.75rem; text-transform:uppercase;
+        letter-spacing:1px; color:#475569; font-weight:700; padding:6px 0; margin: 4px 0;
+        border-radius: 4px;
+    }
+    .compare-val { font-size: 0.88rem; font-weight: 500; min-width: 0; overflow-wrap: break-word; word-break: break-word; }
+    .compare-val.c1 { text-align: right; padding-right: 12px; }
+    .compare-val.c2 { text-align: left; padding-left: 12px; }
+    .winner-c1 { color: #1d4ed8; font-weight: 700; }
+    .winner-c2 { color: #15803d; font-weight: 700; }
+    .chart-card { height: 320px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <nav aria-label="breadcrumb" class="page-breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'landing_page' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'country_compare' %}">Compare</a></li>
+            <li class="breadcrumb-item active">{{ country1.name }} vs {{ country2.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- ── Hero Header ── -->
+    <div class="country-hero-banner fade-up mb-4">
+        <div class="row align-items-center gy-3">
+            <div class="col text-center">
+                {% if country1.flag_url %}
+                <img src="{{ country1.flag_url }}" alt="{{ country1.name }}" class="flag-img me-3"
+                     style="width:90px;height:60px;object-fit:cover;">
+                {% endif %}
+                <span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.6rem;">{{ country1.name }}</span>
+            </div>
+            <div class="col-auto text-center">
+                <div class="vs-badge">VS</div>
+            </div>
+            <div class="col text-center">
+                {% if country2.flag_url %}
+                <img src="{{ country2.flag_url }}" alt="{{ country2.name }}" class="flag-img me-3"
+                     style="width:90px;height:60px;object-fit:cover;">
+                {% endif %}
+                <span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.6rem;">{{ country2.name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ── Comparison Table ── -->
+        <div class="col-12 fade-up">
+            <div class="card">
+                <div class="info-card-header"><i class="fas fa-table me-2"></i>Side-by-Side Comparison</div>
+                <div class="card-body py-3">
+                    <!-- Table header -->
+                    <div class="compare-row" style="font-weight:700;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:4px;">
+                        <div style="text-align:right;padding-right:10px;">
+                            {% if country1.flag_url %}<img src="{{ country1.flag_url }}" style="width:28px;height:20px;object-fit:cover;border-radius:4px;margin-right:6px;">{% endif %}
+                            <span style="color:#1d4ed8;">{{ country1.name }}</span>
+                        </div>
+                        <div class="compare-label"></div>
+                        <div style="text-align:left;padding-left:10px;">
+                            {% if country2.flag_url %}<img src="{{ country2.flag_url }}" style="width:28px;height:20px;object-fit:cover;border-radius:4px;margin-right:6px;">{% endif %}
+                            <span style="color:#15803d;">{{ country2.name }}</span>
+                        </div>
+                    </div>
+                    <!-- Rows -->
+                    {% with c1=country1 c2=country2 %}
+                    <div class="compare-row">
+                        <span class="compare-val c1">{{ c1.region|default:"—" }}</span>
+                        <span class="compare-label">Region</span>
+                        <span class="compare-val c2">{{ c2.region|default:"—" }}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">{{ c1.subregion|default:"—" }}</span>
+                        <span class="compare-label">Subregion</span>
+                        <span class="compare-val c2">{{ c2.subregion|default:"—" }}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">{{ c1.capital|default:"—" }}</span>
+                        <span class="compare-label">Capital</span>
+                        <span class="compare-val c2">{{ c2.capital|default:"—" }}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.population > c2.population %}winner-c1{% endif %}">
+                            {% if c1.population %}{{ c1.population|floatformat:"0" }}{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Population</span>
+                        <span class="compare-val c2 {% if c2.population > c1.population %}winner-c2{% endif %}">
+                            {% if c2.population %}{{ c2.population|floatformat:"0" }}{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.area > c2.area %}winner-c1{% endif %}">
+                            {% if c1.area %}{{ c1.area|floatformat:"0" }} km²{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Area</span>
+                        <span class="compare-val c2 {% if c2.area > c1.area %}winner-c2{% endif %}">
+                            {% if c2.area %}{{ c2.area|floatformat:"0" }} km²{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">
+                            {% for cur in c1.currencies_detail %}{{ cur.name }} ({{ cur.code }}){% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                        </span>
+                        <span class="compare-label">Currency</span>
+                        <span class="compare-val c2">
+                            {% for cur in c2.currencies_detail %}{{ cur.name }} ({{ cur.code }}){% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">
+                            {% for lang in c1.languages %}{{ lang|upper }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                        </span>
+                        <span class="compare-label">Languages</span>
+                        <span class="compare-val c2">
+                            {% for lang in c2.languages %}{{ lang|upper }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">{{ c1.native_name|default:"—" }}</span>
+                        <span class="compare-label">Native Name</span>
+                        <span class="compare-val c2">{{ c2.native_name|default:"—" }}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">
+                            {% for code in c1.calling_codes %}+{{ code }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                        </span>
+                        <span class="compare-label">Call Code</span>
+                        <span class="compare-val c2">
+                            {% for code in c2.calling_codes %}+{{ code }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">{{ c1.tld.0|default:"—" }}</span>
+                        <span class="compare-label">TLD</span>
+                        <span class="compare-val c2">{{ c2.tld.0|default:"—" }}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1">{{ c1.demonym|default:"—" }}</span>
+                        <span class="compare-label">Demonym</span>
+                        <span class="compare-val c2">{{ c2.demonym|default:"—" }}</span>
+                    </div>
+
+                    <!-- ── Economic Metrics ── -->
+                    <div class="compare-row" style="padding:0;"><div class="section-divider">💰 Economic Metrics</div></div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.gdp_billion and c2.extra.gdp_billion %}{% if c1.extra.gdp_billion > c2.extra.gdp_billion %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.gdp_billion %}${{ c1.extra.gdp_billion|floatformat:"0" }}B{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">GDP</span>
+                        <span class="compare-val c2 {% if c1.extra.gdp_billion and c2.extra.gdp_billion %}{% if c2.extra.gdp_billion > c1.extra.gdp_billion %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.gdp_billion %}${{ c2.extra.gdp_billion|floatformat:"0" }}B{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.gdp_per_capita and c2.extra.gdp_per_capita %}{% if c1.extra.gdp_per_capita > c2.extra.gdp_per_capita %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.gdp_per_capita %}${{ c1.extra.gdp_per_capita|floatformat:"0" }}{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">GDP/Capita</span>
+                        <span class="compare-val c2 {% if c1.extra.gdp_per_capita and c2.extra.gdp_per_capita %}{% if c2.extra.gdp_per_capita > c1.extra.gdp_per_capita %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.gdp_per_capita %}${{ c2.extra.gdp_per_capita|floatformat:"0" }}{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.hdi and c2.extra.hdi %}{% if c1.extra.hdi > c2.extra.hdi %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.hdi %}{{ c1.extra.hdi }} <small style="color:#64748b;">(#{{ c1.extra.hdi_rank }})</small>{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">HDI</span>
+                        <span class="compare-val c2 {% if c1.extra.hdi and c2.extra.hdi %}{% if c2.extra.hdi > c1.extra.hdi %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.hdi %}{{ c2.extra.hdi }} <small style="color:#64748b;">(#{{ c2.extra.hdi_rank }})</small>{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.gini and c2.extra.gini %}{% if c1.extra.gini < c2.extra.gini %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.gini %}{{ c1.extra.gini }}{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Gini Index</span>
+                        <span class="compare-val c2 {% if c1.extra.gini and c2.extra.gini %}{% if c2.extra.gini < c1.extra.gini %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.gini %}{{ c2.extra.gini }}{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.unemployment and c2.extra.unemployment %}{% if c1.extra.unemployment < c2.extra.unemployment %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.unemployment %}{{ c1.extra.unemployment }}%{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Unemployment</span>
+                        <span class="compare-val c2 {% if c1.extra.unemployment and c2.extra.unemployment %}{% if c2.extra.unemployment < c1.extra.unemployment %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.unemployment %}{{ c2.extra.unemployment }}%{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.inflation and c2.extra.inflation %}{% if c1.extra.inflation < c2.extra.inflation %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.inflation %}{{ c1.extra.inflation }}%{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Inflation</span>
+                        <span class="compare-val c2 {% if c1.extra.inflation and c2.extra.inflation %}{% if c2.extra.inflation < c1.extra.inflation %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.inflation %}{{ c2.extra.inflation }}%{% else %}—{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- ── Military Metrics ── -->
+                    <div class="compare-row" style="padding:0;"><div class="section-divider">⚔️ Military Power</div></div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.gfp_rank and c2.extra.gfp_rank %}{% if c1.extra.gfp_rank < c2.extra.gfp_rank %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.gfp_rank %}#{{ c1.extra.gfp_rank }}{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">GFP Rank</span>
+                        <span class="compare-val c2 {% if c1.extra.gfp_rank and c2.extra.gfp_rank %}{% if c2.extra.gfp_rank < c1.extra.gfp_rank %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.gfp_rank %}#{{ c2.extra.gfp_rank }}{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.military_active and c2.extra.military_active %}{% if c1.extra.military_active > c2.extra.military_active %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.military_active %}{{ c1.extra.military_active }}K{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Active Troops</span>
+                        <span class="compare-val c2 {% if c1.extra.military_active and c2.extra.military_active %}{% if c2.extra.military_active > c1.extra.military_active %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.military_active %}{{ c2.extra.military_active }}K{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.military_reserve and c2.extra.military_reserve %}{% if c1.extra.military_reserve > c2.extra.military_reserve %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.military_reserve %}{{ c1.extra.military_reserve }}K{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Reserve Troops</span>
+                        <span class="compare-val c2 {% if c1.extra.military_reserve and c2.extra.military_reserve %}{% if c2.extra.military_reserve > c1.extra.military_reserve %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.military_reserve %}{{ c2.extra.military_reserve }}K{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-val c1 {% if c1.extra.military_budget and c2.extra.military_budget %}{% if c1.extra.military_budget > c2.extra.military_budget %}winner-c1{% endif %}{% endif %}">
+                            {% if c1.extra.military_budget %}${{ c1.extra.military_budget }}B{% else %}—{% endif %}
+                        </span>
+                        <span class="compare-label">Mil. Budget</span>
+                        <span class="compare-val c2 {% if c1.extra.military_budget and c2.extra.military_budget %}{% if c2.extra.military_budget > c1.extra.military_budget %}winner-c2{% endif %}{% endif %}">
+                            {% if c2.extra.military_budget %}${{ c2.extra.military_budget }}B{% else %}—{% endif %}
+                        </span>
+                    </div>
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Charts ── -->
+        <div class="col-md-6 fade-up">
+            <div class="card h-100">
+                <div class="info-card-header"><i class="fas fa-users me-2"></i>Population Comparison</div>
+                <div class="card-body">
+                    <canvas id="populationChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 fade-up">
+            <div class="card h-100">
+                <div class="info-card-header"><i class="fas fa-expand-arrows-alt me-2"></i>Area Comparison (km²)</div>
+                <div class="card-body">
+                    <canvas id="areaChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 fade-up">
+            <div class="card h-100">
+                <div class="info-card-header"><i class="fas fa-dollar-sign me-2"></i>GDP Comparison (USD Billion)</div>
+                <div class="card-body">
+                    <canvas id="gdpChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 fade-up">
+            <div class="card h-100">
+                <div class="info-card-header"><i class="fas fa-shield-alt me-2"></i>Military Budget (USD Billion)</div>
+                <div class="card-body">
+                    <canvas id="militaryChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 fade-up">
+            <div class="card h-100">
+                <div class="info-card-header"><i class="fas fa-user-tie me-2"></i>HDI Score (0–1)</div>
+                <div class="card-body">
+                    <canvas id="hdiChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Map ── -->
+        {% if country1.latlng or country2.latlng %}
+        <div class="col-12 fade-up">
+            <div class="card">
+                <div class="info-card-header"><i class="fas fa-map-marked-alt me-2"></i>Locations on Map</div>
+                <div class="card-body p-0">
+                    <div class="map-container">
+                        <div id="compareMap"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ── Wikipedia Links ── -->
+        <div class="col-md-6 fade-up">
+            {% if country1.wiki %}
+            <div class="card p-3 text-center">
+                {% if country1.flag_url %}<img src="{{ country1.flag_url }}" style="width:60px;height:40px;object-fit:cover;border-radius:6px;" class="mb-2">{% endif %}
+                <h6 class="fw-bold mb-2">{{ country1.name }}</h6>
+                <a href="{{ country1.wiki }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fab fa-wikipedia-w me-1"></i>Wikipedia</a>
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-md-6 fade-up">
+            {% if country2.wiki %}
+            <div class="card p-3 text-center">
+                {% if country2.flag_url %}<img src="{{ country2.flag_url }}" style="width:60px;height:40px;object-fit:cover;border-radius:6px;" class="mb-2">{% endif %}
+                <h6 class="fw-bold mb-2">{{ country2.name }}</h6>
+                <a href="{{ country2.wiki }}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fab fa-wikipedia-w me-1"></i>Wikipedia</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-4 mb-2">
+        <a href="{% url 'country_compare' %}" class="btn btn-glob-primary"><i class="fas fa-exchange-alt me-2"></i>Compare Again</a>
+        <a href="{% url 'country_info' %}" class="btn btn-glob-secondary"><i class="fas fa-search me-2"></i>Country Info</a>
+        <a href="{% url 'landing_page' %}" class="btn" style="border:2px solid #64748b;color:#64748b;border-radius:10px;padding:9px 20px;font-weight:600;"><i class="fas fa-home me-2"></i>Home</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Chart colours
+var c1Color = 'rgba(37,99,235,0.8)';
+var c2Color = 'rgba(22,163,74,0.8)';
+var c1Border = 'rgba(37,99,235,1)';
+var c2Border = 'rgba(22,163,74,1)';
+
+// Population Chart
+{% if country1.population and country2.population %}
+new Chart(document.getElementById('populationChart'), {
+    type: 'bar',
+    data: {
+        labels: ['{{ country1.name }}', '{{ country2.name }}'],
+        datasets: [{
+            label: 'Population',
+            data: [{{ country1.population }}, {{ country2.population }}],
+            backgroundColor: [c1Color, c2Color],
+            borderColor: [c1Border, c2Border],
+            borderWidth: 2, borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v >= 1e9 ? (v/1e9).toFixed(1)+'B' : v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v } } }
+    }
+});
+{% endif %}
+
+// Area Chart
+{% if country1.area and country2.area %}
+new Chart(document.getElementById('areaChart'), {
+    type: 'bar',
+    data: {
+        labels: ['{{ country1.name }}', '{{ country2.name }}'],
+        datasets: [{
+            label: 'Area (km²)',
+            data: [{{ country1.area }}, {{ country2.area }}],
+            backgroundColor: [c1Color, c2Color],
+            borderColor: [c1Border, c2Border],
+            borderWidth: 2, borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v.toLocaleString() } } }
+    }
+});
+{% endif %}
+
+// GDP Chart
+(function(){
+    var el = document.getElementById('gdpChart');
+    if(!el) return;
+    var v1 = {{ country1.extra.gdp_billion|default:0 }};
+    var v2 = {{ country2.extra.gdp_billion|default:0 }};
+    new Chart(el, {
+        type: 'bar',
+        data: {
+            labels: ['{{ country1.name }}', '{{ country2.name }}'],
+            datasets: [{ label: 'GDP (USD B)', data: [v1, v2],
+                backgroundColor: [c1Color, c2Color], borderColor: [c1Border, c2Border],
+                borderWidth: 2, borderRadius: 8 }]
+        },
+        options: { responsive:true, maintainAspectRatio:true,
+            plugins:{ legend:{display:false} },
+            scales:{ y:{ beginAtZero:true, ticks:{ callback: v => '$'+v.toLocaleString()+'B' } } } }
+    });
+})();
+
+// Military Budget Chart
+(function(){
+    var el = document.getElementById('militaryChart');
+    if(!el) return;
+    var v1 = {{ country1.extra.military_budget|default:0 }};
+    var v2 = {{ country2.extra.military_budget|default:0 }};
+    new Chart(el, {
+        type: 'bar',
+        data: {
+            labels: ['{{ country1.name }}', '{{ country2.name }}'],
+            datasets: [{ label: 'Military Budget (USD B)', data: [v1, v2],
+                backgroundColor: ['rgba(239,68,68,0.8)','rgba(245,158,11,0.8)'],
+                borderColor: ['rgba(239,68,68,1)','rgba(245,158,11,1)'],
+                borderWidth: 2, borderRadius: 8 }]
+        },
+        options: { responsive:true, maintainAspectRatio:true,
+            plugins:{ legend:{display:false} },
+            scales:{ y:{ beginAtZero:true, ticks:{ callback: v => '$'+v.toLocaleString()+'B' } } } }
+    });
+})();
+
+// HDI Chart
+(function(){
+    var el = document.getElementById('hdiChart');
+    if(!el) return;
+    var v1 = {{ country1.extra.hdi|default:0 }};
+    var v2 = {{ country2.extra.hdi|default:0 }};
+    new Chart(el, {
+        type: 'bar',
+        data: {
+            labels: ['{{ country1.name }}', '{{ country2.name }}'],
+            datasets: [{ label: 'HDI', data: [v1, v2],
+                backgroundColor: ['rgba(168,85,247,0.8)','rgba(20,184,166,0.8)'],
+                borderColor: ['rgba(168,85,247,1)','rgba(20,184,166,1)'],
+                borderWidth: 2, borderRadius: 8 }]
+        },
+        options: { responsive:true, maintainAspectRatio:true,
+            plugins:{ legend:{display:false} },
+            scales:{ y:{ beginAtZero:true, max:1,
+                ticks:{ callback: v => v.toFixed(2) } } } }
+    });
+})();
+
+// Leaflet Map — both countries
+{% if country1.latlng or country2.latlng %}
+(function(){
+    var bounds = [];
+    var map = L.map('compareMap', { scrollWheelZoom: false }).setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    {% if country1.latlng %}
+    var m1 = L.marker([{{ country1.latlng.0 }}, {{ country1.latlng.1 }}], {
+        icon: L.divIcon({ html: '<div style="background:#2563eb;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.3);">1</div>', className:'', iconSize:[28,28], iconAnchor:[14,14] })
+    }).addTo(map);
+    m1.bindPopup('<strong>{{ country1.name }}</strong>{% if country1.capital %}<br><span style="color:#64748b;font-size:0.8rem;">{{ country1.capital }}</span>{% endif %}');
+    bounds.push([{{ country1.latlng.0 }}, {{ country1.latlng.1 }}]);
+    {% endif %}
+
+    {% if country2.latlng %}
+    var m2 = L.marker([{{ country2.latlng.0 }}, {{ country2.latlng.1 }}], {
+        icon: L.divIcon({ html: '<div style="background:#16a34a;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.3);">2</div>', className:'', iconSize:[28,28], iconAnchor:[14,14] })
+    }).addTo(map);
+    m2.bindPopup('<strong>{{ country2.name }}</strong>{% if country2.capital %}<br><span style="color:#64748b;font-size:0.8rem;">{{ country2.capital }}</span>{% endif %}');
+    bounds.push([{{ country2.latlng.0 }}, {{ country2.latlng.1 }}]);
+    {% endif %}
+
+    if (bounds.length === 2) { map.fitBounds(bounds, { padding: [60, 60] }); }
+    else if (bounds.length === 1) { map.setView(bounds[0], 5); }
+})();
+{% endif %}
+</script>
+{% endblock %}

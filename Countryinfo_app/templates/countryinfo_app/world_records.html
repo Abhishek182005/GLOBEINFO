@@ -1,0 +1,785 @@
+{% extends 'Countryinfo_app/base.html' %}
+{% block title %}World Records{% endblock %}
+{% block nav_records %}active{% endblock %}
+{% block extra_css %}
+<style>
+  .rec-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #0d9488 100%);
+    color: white;
+    border-radius: 24px;
+    padding: 1.75rem 2rem 1.5rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .rec-hero::after {
+    content: "\f091";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    right: 2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 7rem;
+    opacity: 0.07;
+    user-select: none;
+  }
+  .rec-hero h1 {
+    font-family: "Poppins", sans-serif;
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.4rem;
+  }
+  .rec-hero p {
+    opacity: 0.78;
+    max-width: 600px;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  /* Section headings */
+  .rec-section {
+    margin-bottom: 1.5rem;
+  }
+  .rec-section-title {
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--primary);
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rec-section-title i {
+    color: var(--accent);
+    font-size: 1rem;
+  }
+
+  /* Rank table */
+  .rank-table {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+  }
+  .rank-table thead th {
+    background: linear-gradient(135deg, var(--primary), #1e3a8a);
+    color: white;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 11px 14px;
+    border: none;
+    font-weight: 600;
+  }
+  .rank-table tbody tr {
+    transition: background 0.15s;
+  }
+  .rank-table tbody tr:hover {
+    background: #f0f9ff;
+  }
+  .rank-table td {
+    padding: 7px 12px;
+    vertical-align: middle;
+    border-color: var(--border-color);
+    font-size: 0.875rem;
+  }
+  .rank-badge {
+    background: linear-gradient(135deg, var(--primary), #2563eb);
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .rank-badge.gold {
+    background: linear-gradient(135deg, #b7791f, #f6c90e);
+  }
+  .rank-badge.silver {
+    background: linear-gradient(135deg, #718096, #cbd5e0);
+  }
+  .rank-badge.bronze {
+    background: linear-gradient(135deg, #9c4221, #ed8936);
+  }
+  .val-chip {
+    background: #e0f7f5;
+    color: #0d9488;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+  .flag-sm {
+    width: 28px;
+    height: 19px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+    vertical-align: middle;
+  }
+
+  /* Notable records grid */
+  .notable-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.25rem 1.1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+    height: 100%;
+  }
+  .notable-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  }
+  .notable-icon {
+    font-size: 1.75rem;
+    margin-bottom: 4px;
+  }
+  .notable-title {
+    font-weight: 700;
+    font-size: 0.83rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted-color);
+  }
+  .notable-value {
+    font-family: "Poppins", sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--primary);
+    line-height: 1.2;
+  }
+  .notable-detail {
+    font-size: 0.78rem;
+    color: var(--text-muted-color);
+  }
+
+  /* Progress bar rows for simple categories */
+  .bar-row {
+    margin-bottom: 0.9rem;
+  }
+  .bar-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .bar-outer {
+    background: #e2e8f0;
+    border-radius: 8px;
+    height: 10px;
+  }
+  .bar-inner {
+    background: linear-gradient(90deg, var(--accent), var(--primary-light));
+    border-radius: 8px;
+    height: 10px;
+    transition: width 1s ease;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container py-2">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="page-breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{% url 'landing_page' %}">Home</a>
+      </li>
+      <li class="breadcrumb-item active">World Records</li>
+    </ol>
+  </nav>
+
+  <!-- Hero -->
+  <div class="rec-hero fade-up">
+    <h1>
+      <i class="fas fa-trophy me-3" style="color: #f6c90e"></i>World Records
+    </h1>
+    <p>
+      Key geographical, political and natural records from across the globe —
+      largest, smallest, highest, longest and most extreme.
+    </p>
+  </div>
+
+  <!-- ── Row 1: Largest & Smallest by area side-by-side ── -->
+  <div class="row g-4 mb-4 fade-up">
+    <!-- Largest -->
+    <div class="col-lg-8">
+      <div class="rec-section mb-0">
+        <div class="rec-section-title">
+          <i class="fas fa-expand-arrows-alt"></i>Largest Countries by Area
+        </div>
+        <div class="card p-0">
+          <table class="table rank-table mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Country</th>
+                <th>Area</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records.largest_by_area %}
+              <tr>
+                <td>
+                  <span
+                    class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                    >{{ r.rank }}</span
+                  >
+                </td>
+                <td>
+                  <img
+                    src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                    alt="{{ r.country }}"
+                    class="flag-sm me-2"
+                  />
+                  <a
+                    href="{% url 'country_info' %}?country={{ r.country|urlencode }}"
+                    style="
+                      color: var(--primary);
+                      font-weight: 600;
+                      text-decoration: none;
+                    "
+                    >{{ r.country }}</a
+                  >
+                </td>
+                <td>
+                  <span class="val-chip">{{ r.value }} {{ r.unit }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smallest -->
+    <div class="col-lg-4">
+      <div class="rec-section mb-0">
+        <div class="rec-section-title">
+          <i class="fas fa-compress-arrows-alt"></i>Smallest Countries
+        </div>
+        <div class="card p-0">
+          <table class="table rank-table mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Country</th>
+                <th>Area</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records.smallest_by_area %}
+              <tr>
+                <td>
+                  <span
+                    class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                    >{{ r.rank }}</span
+                  >
+                </td>
+                <td>
+                  <img
+                    src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                    alt="{{ r.country }}"
+                    class="flag-sm me-2"
+                  />
+                  <a
+                    href="{% url 'country_info' %}?country={{ r.country|urlencode }}"
+                    style="
+                      color: var(--primary);
+                      font-weight: 600;
+                      text-decoration: none;
+                    "
+                    >{{ r.country }}</a
+                  >
+                </td>
+                <td>
+                  <span class="val-chip">{{ r.value }} {{ r.unit }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Row 2: Most Populous ── -->
+  <div class="rec-section fade-up">
+    <div class="rec-section-title">
+      <i class="fas fa-users"></i>Most Populous Countries
+    </div>
+    <div class="card p-0">
+      <table class="table rank-table mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Country</th>
+            <th>Population</th>
+            <th class="d-none d-md-table-cell">Visual</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% with max_pop=1441719852 %} {% for r in records.most_populous %}
+          <tr>
+            <td>
+              <span
+                class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                >{{ r.rank }}</span
+              >
+            </td>
+            <td>
+              <img
+                src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                alt="{{ r.country }}"
+                class="flag-sm me-2"
+              />
+              <a
+                href="{% url 'country_info' %}?country={{ r.country|urlencode }}"
+                style="
+                  color: var(--primary);
+                  font-weight: 600;
+                  text-decoration: none;
+                "
+                >{{ r.country }}</a
+              >
+            </td>
+            <td><span class="val-chip">{{ r.value }}</span></td>
+            <td class="d-none d-md-table-cell" style="min-width: 160px">
+              <div class="bar-outer">
+                <div
+                  class="bar-inner"
+                  style="width:{{ r.rank|add:'-1' }}0%;"
+                ></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %} {% endwith %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Row 3: Mountains & Rivers side-by-side ── -->
+  <div class="row g-4 mb-4 fade-up">
+    <!-- Highest Mountains -->
+    <div class="col-lg-6">
+      <div class="rec-section mb-0">
+        <div class="rec-section-title">
+          <i class="fas fa-mountain"></i>Highest Mountain Peaks
+        </div>
+        <div class="card p-0">
+          <table class="table rank-table mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Peak</th>
+                <th>Country</th>
+                <th>Altitude</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records.highest_mountains %}
+              <tr>
+                <td>
+                  <span
+                    class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                    >{{ r.rank }}</span
+                  >
+                </td>
+                <td style="font-weight: 600">{{ r.peak }}</td>
+                <td>
+                  <img
+                    src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                    alt=""
+                    class="flag-sm me-1"
+                  />
+                  <small class="text-muted">{{ r.country }}</small>
+                </td>
+                <td>
+                  <span class="val-chip">{{ r.value }} {{ r.unit }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Longest Rivers -->
+    <div class="col-lg-6">
+      <div class="rec-section mb-0">
+        <div class="rec-section-title">
+          <i class="fas fa-water"></i>Longest Rivers
+        </div>
+        <div class="card p-0">
+          <table class="table rank-table mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>River</th>
+                <th>Countries</th>
+                <th>Length</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records.longest_rivers %}
+              <tr>
+                <td>
+                  <span
+                    class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                    >{{ r.rank }}</span
+                  >
+                </td>
+                <td style="font-weight: 600">{{ r.river }}</td>
+                <td>
+                  <img
+                    src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                    alt=""
+                    class="flag-sm me-1"
+                  />
+                  <small class="text-muted">{{ r.countries }}</small>
+                </td>
+                <td>
+                  <span class="val-chip">{{ r.value }} {{ r.unit }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Row 4: Coastlines, Languages, Timezones ── -->
+  <div class="row g-4 mb-4 fade-up">
+    <!-- Coastlines -->
+    <div class="col-lg-5">
+      <div class="rec-section mb-0">
+        <div class="rec-section-title">
+          <i class="fas fa-anchor"></i>Longest Coastlines
+        </div>
+        <div class="card p-0">
+          <table class="table rank-table mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Country</th>
+                <th>Coastline</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records.longest_coastlines %}
+              <tr>
+                <td>
+                  <span
+                    class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                    >{{ r.rank }}</span
+                  >
+                </td>
+                <td>
+                  <img
+                    src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                    alt="{{ r.country }}"
+                    class="flag-sm me-2"
+                  />
+                  <a
+                    href="{% url 'country_info' %}?country={{ r.country|urlencode }}"
+                    style="
+                      color: var(--primary);
+                      font-weight: 600;
+                      text-decoration: none;
+                    "
+                    >{{ r.country }}</a
+                  >
+                </td>
+                <td>
+                  <span class="val-chip">{{ r.value }} {{ r.unit }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Languages & Timezones stacked -->
+    <div class="col-lg-7">
+      <div class="row g-4 h-100">
+        <div class="col-12">
+          <div class="rec-section mb-0">
+            <div class="rec-section-title">
+              <i class="fas fa-language"></i>Most Official Languages
+            </div>
+            <div class="card p-0">
+              <table class="table rank-table mb-0">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Country</th>
+                    <th>Languages</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in records.most_official_languages %}
+                  <tr>
+                    <td>
+                      <span
+                        class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                        >{{ r.rank }}</span
+                      >
+                    </td>
+                    <td>
+                      <img
+                        src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                        alt="{{ r.country }}"
+                        class="flag-sm me-2"
+                      />
+                      <a
+                        href="{% url 'country_info' %}?country={{ r.country|urlencode }}"
+                        style="
+                          color: var(--primary);
+                          font-weight: 600;
+                          text-decoration: none;
+                        "
+                        >{{ r.country }}</a
+                      >
+                    </td>
+                    <td>
+                      <span class="val-chip">{{ r.value }} {{ r.unit }}</span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="rec-section mb-0">
+            <div class="rec-section-title">
+              <i class="fas fa-clock"></i>Most Time Zones
+            </div>
+            <div class="card p-0">
+              <table class="table rank-table mb-0">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Country</th>
+                    <th>Time Zones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in records.most_timezones %}
+                  <tr>
+                    <td>
+                      <span
+                        class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                        >{{ r.rank }}</span
+                      >
+                    </td>
+                    <td>
+                      <img
+                        src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                        alt="{{ r.country }}"
+                        class="flag-sm me-2"
+                      />
+                      <a
+                        href="{% url 'country_info' %}?country={{ r.country|urlencode }}"
+                        style="
+                          color: var(--primary);
+                          font-weight: 600;
+                          text-decoration: none;
+                        "
+                        >{{ r.country }}</a
+                      >
+                    </td>
+                    <td>
+                      <span class="val-chip">{{ r.value }} {{ r.unit }}</span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Notable Natural Records grid ── -->
+  <section class="rec-section fade-up">
+    <div class="rec-section-title">
+      <i class="fas fa-star"></i>Notable Natural &amp; Man-Made Records
+    </div>
+    <div class="row g-3">
+      {% for item in records.notable_records %}
+      <div class="col-6 col-md-4 col-lg-3 col-xxl-2">
+        <div class="notable-card">
+          <div class="notable-icon">
+            <i class="fas {{ item.icon }}" style="color:{{ item.color }};"></i>
+          </div>
+          <div class="notable-title">{{ item.title }}</div>
+          <div class="notable-value">{{ item.value }}</div>
+          <div class="notable-detail text-muted">{{ item.detail }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Population density -->
+  <section class="rec-section fade-up">
+    <div class="rec-section-title">
+      <i class="fas fa-city"></i>Most Densely Populated Countries
+    </div>
+    <div class="card p-0" style="max-width: 600px">
+      <table class="table rank-table mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Country</th>
+            <th>Density</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records.population_density %}
+          <tr>
+            <td>
+              <span
+                class="rank-badge {% if r.rank == 1 %}gold{% elif r.rank == 2 %}silver{% elif r.rank == 3 %}bronze{% endif %}"
+                >{{ r.rank }}</span
+              >
+            </td>
+            <td>
+              <img
+                src="https://flagcdn.com/w40/{{ r.alpha2 }}.png"
+                alt="{{ r.country }}"
+                class="flag-sm me-2"
+              />
+              <a
+                href="{% url 'country_info' %}?country={{ r.country|urlencode }}"
+                style="
+                  color: var(--primary);
+                  font-weight: 600;
+                  text-decoration: none;
+                "
+                >{{ r.country }}</a
+              >
+            </td>
+            <td><span class="val-chip">{{ r.value }} {{ r.unit }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Economy & Military Rankings (compact 2-col) -->
+  <div class="row g-3 mb-3 fade-up">
+    <div class="col-lg-7">
+      <div class="rec-section-title mb-2"><i class="fas fa-chart-line"></i>Largest Economies (Nominal GDP)</div>
+      <table class="table rank-table mb-0">
+        <thead><tr><th>#</th><th>Country</th><th>GDP</th><th>HDI</th></tr></thead>
+        <tbody>
+          {% for c in gdp_ranking %}
+          <tr>
+            <td><span class="rank-badge {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">{{ forloop.counter }}</span></td>
+            <td>{% if c.alpha2 %}<img src="https://flagcdn.com/w40/{{ c.alpha2 }}.png" alt="{{ c.name }}" class="flag-sm me-2">{% endif %}<a href="{% url 'country_info' %}?country={{ c.name|urlencode }}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ c.name }}</a></td>
+            <td><span class="val-chip">${{ c.gdp_billion|floatformat:0 }}B</span></td>
+            <td><span style="font-size:0.8rem;font-weight:600;color:{% if c.hdi >= 0.9 %}#16a34a{% elif c.hdi >= 0.8 %}#0d9488{% else %}#d97706{% endif %};">{{ c.hdi }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col-lg-5">
+      <div class="rec-section-title mb-2"><i class="fas fa-wallet"></i>Highest GDP per Capita</div>
+      <table class="table rank-table mb-0">
+        <thead><tr><th>#</th><th>Country</th><th>Per Capita</th><th>Gini</th></tr></thead>
+        <tbody>
+          {% for c in gdp_per_capita_ranking %}
+          <tr>
+            <td><span class="rank-badge {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">{{ forloop.counter }}</span></td>
+            <td>{% if c.alpha2 %}<img src="https://flagcdn.com/w40/{{ c.alpha2 }}.png" alt="{{ c.name }}" class="flag-sm me-2">{% endif %}<a href="{% url 'country_info' %}?country={{ c.name|urlencode }}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ c.name }}</a></td>
+            <td><span class="val-chip">${{ c.gdp_per_capita|floatformat:0 }}</span></td>
+            <td>{% if c.gini %}{{ c.gini }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3 fade-up">
+    <div class="col-lg-6">
+      <div class="rec-section-title mb-2"><i class="fas fa-graduation-cap"></i>Highest Human Development Index</div>
+      <table class="table rank-table mb-0">
+        <thead><tr><th>#</th><th>Country</th><th>HDI</th><th>Unemployment</th></tr></thead>
+        <tbody>
+          {% for c in hdi_ranking %}
+          <tr>
+            <td><span class="rank-badge {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">{{ forloop.counter }}</span></td>
+            <td>{% if c.alpha2 %}<img src="https://flagcdn.com/w40/{{ c.alpha2 }}.png" alt="{{ c.name }}" class="flag-sm me-2">{% endif %}<a href="{% url 'country_info' %}?country={{ c.name|urlencode }}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ c.name }}</a></td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <span class="fw-bold" style="font-size:0.85rem;color:{% if c.hdi >= 0.9 %}#16a34a{% elif c.hdi >= 0.8 %}#0d9488{% else %}#d97706{% endif %};">{{ c.hdi }}</span>
+                <div class="progress" style="width:44px;height:5px;border-radius:3px;"><div class="progress-bar" style="width:{% widthratio c.hdi 1 100 %}%;background:{% if c.hdi >= 0.9 %}#16a34a{% elif c.hdi >= 0.8 %}#0d9488{% else %}#d97706{% endif %};border-radius:3px;"></div></div>
+              </div>
+            </td>
+            <td>{% if c.unemployment %}{{ c.unemployment }}%{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col-lg-6">
+      <div class="rec-section-title mb-2"><i class="fas fa-shield-alt"></i>Military Power Index (GFP 2024)</div>
+      <table class="table rank-table mb-0">
+        <thead><tr><th>GFP</th><th>Country</th><th>Active Troops</th><th>Budget</th></tr></thead>
+        <tbody>
+          {% for c in military_ranking %}
+          <tr>
+            <td><span class="rank-badge {% if c.gfp_rank == 1 %}gold{% elif c.gfp_rank == 2 %}silver{% elif c.gfp_rank == 3 %}bronze{% endif %}">#{{ c.gfp_rank }}</span></td>
+            <td>{% if c.alpha2 %}<img src="https://flagcdn.com/w40/{{ c.alpha2 }}.png" alt="{{ c.name }}" class="flag-sm me-2">{% endif %}<a href="{% url 'country_info' %}?country={{ c.name|urlencode }}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ c.name }}</a></td>
+            <td>{% if c.military_active %}<span class="val-chip">{{ c.military_active|floatformat:0 }}K</span>{% else %}—{% endif %}</td>
+            <td>{% if c.military_budget %}<strong style="color:#b91c1c;">${{ c.military_budget }}B</strong>{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer nav -->
+  <div class="d-flex flex-wrap gap-2 mt-2 mb-4">
+    <a href="{% url 'landing_page' %}" class="btn btn-glob-secondary"
+      ><i class="fas fa-home me-2"></i>Home</a
+    >
+    <a href="{% url 'country_and_capitals' %}" class="btn btn-glob-secondary"
+      ><i class="fas fa-list me-2"></i>All Countries</a
+    >
+    <a href="{% url 'world_map' %}" class="btn btn-glob-secondary"
+      ><i class="fas fa-map me-2"></i>World Map</a
+    >
+  </div>
+</div>
+{% endblock %}

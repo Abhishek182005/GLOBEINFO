@@ -1,0 +1,47 @@
+{% extends 'Countryinfo_app/base.html' %}
+
+{% block title %}Menu{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px;margin-top:2.5rem;">
+    <div class="text-center mb-5 fade-up">
+        <h1 class="section-title" style="font-size:2.2rem;">What Would You Like to Do?</h1>
+        <p class="text-muted">Pick one of the options below to get started</p>
+    </div>
+    <div class="row g-4 justify-content-center fade-up">
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100 p-4 text-center">
+                <div style="font-size:3rem;margin-bottom:1rem;">&#127758;</div>
+                <h5 class="fw-bold mb-2">Country Info</h5>
+                <p class="text-muted small">Get detailed information about any country including maps, flags, currencies, languages and more.</p>
+                <a href="{% url 'country_info' %}" class="btn btn-glob-primary mt-auto">
+                    <i class="fas fa-search me-2"></i>Explore
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100 p-4 text-center">
+                <div style="font-size:3rem;margin-bottom:1rem;">&#9878;&#65039;</div>
+                <h5 class="fw-bold mb-2">Compare Countries</h5>
+                <p class="text-muted small">Compare population, area, languages and currencies of two countries side-by-side with charts.</p>
+                <a href="{% url 'country_compare' %}" class="btn mt-auto" style="background:linear-gradient(135deg,#16a34a,#15803d);color:white;border-radius:10px;padding:10px 20px;font-weight:600;">
+                    <i class="fas fa-exchange-alt me-2"></i>Compare
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100 p-4 text-center">
+                <div style="font-size:3rem;margin-bottom:1rem;">&#128506;&#65039;</div>
+                <h5 class="fw-bold mb-2">All Countries</h5>
+                <p class="text-muted small">Browse a searchable, filterable list of all countries with their capitals, currencies and continents.</p>
+                <a href="{% url 'country_and_capitals' %}" class="btn mt-auto" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border-radius:10px;padding:10px 20px;font-weight:600;">
+                    <i class="fas fa-list me-2"></i>Browse
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'landing_page' %}" class="btn btn-glob-secondary"><i class="fas fa-home me-2"></i>Back to Home</a>
+    </div>
+</div>
+{% endblock %}      

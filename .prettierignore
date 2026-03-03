@@ -1,0 +1,4 @@
+# Ignore Django templates – Prettier does not understand Django template tags
+# and will break {% block %}, {% if %}, {% for %} etc. by splitting them across lines
+Countryinfo_app/templates/**/*.html
+templates/**/*.html

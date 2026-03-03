@@ -1,0 +1,168 @@
+{% extends 'Countryinfo_app/base.html' %}
+
+{% block title %}All Countries{% endblock %}
+{% block nav_capitals %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .continent-all    { background:#e8f0fe;color:#1d4ed8; }
+    .continent-africa { background:#e8f5e9;color:#2e7d32; }
+    .continent-asia   { background:#fff3e0;color:#e65100; }
+    .continent-europe { background:#e3f2fd;color:#0d47a1; }
+    .continent-north  { background:#fce4ec;color:#880e4f; }
+    .continent-south  { background:#f3e5f5;color:#6a1b9a; }
+    .continent-oceania{ background:#e0f2f1;color:#004d40; }
+    .continent-antarctica { background:#eceff1;color:#455a64; }
+    .filter-btn {
+        border: 2px solid #e2e8f0; background: white; color: #475569;
+        padding: 5px 14px; border-radius: 20px; font-size: 0.82rem;
+        font-weight: 600; cursor: pointer; transition: all 0.18s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+        background: var(--primary); border-color: var(--primary); color: white;
+    }
+    .flag-thumb {
+        width: 36px; height: 24px; object-fit: cover;
+        border-radius: 3px; border: 1px solid #e2e8f0;
+        vertical-align: middle;
+    }
+    .flag-placeholder {
+        width: 36px; height: 24px; background: #e2e8f0;
+        border-radius: 3px; display: inline-block; vertical-align: middle;
+    }
+    tbody tr:hover { background: #f0f9ff !important; cursor: pointer; }
+    tbody tr td { transition: background 0.12s; }
+    .country-link { color: inherit; text-decoration: none; font-weight: 600; }
+    .country-link:hover { color: var(--primary-light); }</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <nav aria-label="breadcrumb" class="page-breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'landing_page' %}">Home</a></li>
+            <li class="breadcrumb-item active">All Countries</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4 fade-up">
+        <div>
+            <h1 class="section-title mb-1" style="font-size:1.8rem;">All Countries</h1>
+            <p class="text-muted small mb-0">{{ countries_capitals|length }} countries listed</p>
+        </div>
+        <!-- Search -->
+        <div style="position:relative;min-width:260px;">
+            <i class="fas fa-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
+            <input type="text" id="tableSearch" placeholder="Search country, capital, currency..." style="width:100%;">
+        </div>
+    </div>
+
+    <!-- Continent Filters -->
+    <div class="d-flex flex-wrap gap-2 mb-4 fade-up">
+        <button class="filter-btn active" data-continent="all">All</button>
+        <button class="filter-btn" data-continent="africa">Africa</button>
+        <button class="filter-btn" data-continent="asia">Asia</button>
+        <button class="filter-btn" data-continent="europe">Europe</button>
+        <button class="filter-btn" data-continent="north america">N. America</button>
+        <button class="filter-btn" data-continent="south america">S. America</button>
+        <button class="filter-btn" data-continent="oceania">Oceania</button>
+        <button class="filter-btn" data-continent="antarctica">Antarctica</button>
+    </div>
+
+    <!-- Table -->
+    <div class="card fade-up">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-modern mb-0" id="countriesTable">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">#</th>
+                            <th style="width:52px;">Flag</th>
+                            <th>Country</th>
+                            <th>Capital</th>
+                            <th>Currency</th>
+                            <th>Continent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ci in countries_capitals %}
+                        <tr data-continent="{{ ci.continent|lower }}" data-search="{{ ci.country|lower }} {{ ci.capital|lower }} {{ ci.currency|lower }} {{ ci.continent|lower }}"
+                            onclick="window.location='{% url 'country_info' %}?country={{ ci.country|urlencode }}'" style="cursor:pointer;">
+                            <td class="text-muted">{{ forloop.counter }}</td>
+                            <td>
+                                {% if ci.flag_url %}
+                                <img src="{{ ci.flag_url }}" alt="{{ ci.country }} flag" class="flag-thumb" loading="lazy">
+                                {% else %}
+                                <span class="flag-placeholder"></span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'country_info' %}?country={{ ci.country|urlencode }}" class="country-link" onclick="event.stopPropagation();">{{ ci.country }}</a>
+                            </td>
+                            <td>{{ ci.capital }}</td>
+                            <td>{{ ci.currency }}</td>
+                            <td>
+                                {% with cont=ci.continent|lower %}
+                                <span class="badge-continent
+                                    {% if 'africa' in cont %}badge-africa
+                                    {% elif 'asia' in cont %}badge-asia
+                                    {% elif 'europe' in cont %}badge-europe
+                                    {% elif 'north america' in cont %}badge-americas
+                                    {% elif 'south america' in cont %}badge-americas
+                                    {% elif 'oceania' in cont %}badge-oceania
+                                    {% else %}badge-continent{% endif %}">
+                                    {{ ci.continent }}
+                                </span>
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <p class="text-muted small mt-2" id="rowCount"></p>
+
+    <div class="mt-3">
+        <a href="{% url 'landing_page' %}" class="btn btn-glob-secondary"><i class="fas fa-home me-2"></i>Home</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    var searchInput = document.getElementById('tableSearch');
+    var filterBtns  = document.querySelectorAll('.filter-btn');
+    var rows        = document.querySelectorAll('#countriesTable tbody tr');
+    var rowCountEl  = document.getElementById('rowCount');
+    var activeContinent = 'all';
+
+    function applyFilters() {
+        var q = searchInput.value.trim().toLowerCase();
+        var visible = 0;
+        rows.forEach(function(row) {
+            var contMatch = activeContinent === 'all' || row.dataset.continent.includes(activeContinent);
+            var searchMatch = !q || row.dataset.search.includes(q);
+            if (contMatch && searchMatch) { row.style.display = ''; visible++; }
+            else { row.style.display = 'none'; }
+        });
+        rowCountEl.textContent = visible + ' countries shown';
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+
+    filterBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            activeContinent = btn.dataset.continent;
+            applyFilters();
+        });
+    });
+
+    applyFilters();
+})();
+</script>
+{% endblock %}

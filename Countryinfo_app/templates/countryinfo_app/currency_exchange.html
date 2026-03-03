@@ -1,0 +1,555 @@
+{% extends 'Countryinfo_app/base.html' %}
+{% block title %}Currency Exchange{% endblock %}
+{% block nav_currency %}active{% endblock %}
+{% block extra_css %}
+<style>
+  .calc-card {
+    border-radius: 20px !important;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+  .calc-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0d9488 100%);
+    color: white;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.75rem 2rem;
+  }
+  .currency-select {
+    height: 52px;
+    font-size: 1rem;
+    border-radius: 12px !important;
+    border: 2px solid var(--border-color) !important;
+    padding: 0 14px;
+    transition: border-color 0.2s;
+    background: #fff;
+  }
+  .currency-select:focus {
+    border-color: var(--primary-light) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+    outline: none;
+  }
+  .amount-input {
+    height: 52px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    border-radius: 12px !important;
+    border: 2px solid var(--border-color) !important;
+    padding: 0 16px;
+    transition: border-color 0.2s;
+  }
+  .amount-input:focus {
+    border-color: var(--primary-light) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+    outline: none;
+  }
+  .result-banner {
+    background: linear-gradient(135deg, #0f172a, #1e3a5f);
+    color: white;
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    text-align: center;
+  }
+  .result-banner .result-amount {
+    font-family: "Poppins", sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #14b8a6;
+  }
+  .result-banner .result-label {
+    font-size: 0.9rem;
+    opacity: 0.75;
+    margin-top: 4px;
+  }
+  .result-banner .rate-note {
+    font-size: 0.8rem;
+    opacity: 0.6;
+    margin-top: 6px;
+  }
+  .swap-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    margin: 0 auto;
+    transition:
+      background 0.2s,
+      transform 0.2s;
+  }
+  .swap-btn:hover {
+    background: #0f766e;
+    transform: rotate(180deg);
+  }
+  /* Rates table */
+  .rates-table th {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: white;
+    font-size: 0.83rem;
+    padding: 10px 14px;
+    font-weight: 600;
+  }
+  .rates-table td {
+    padding: 9px 14px;
+    font-size: 0.88rem;
+    vertical-align: middle;
+  }
+  .rates-table tbody tr:hover {
+    background: #f0f9ff;
+  }
+  .rate-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.83rem;
+  }
+  .loading-overlay {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+  }
+  .error-msg {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #991b1b;
+    font-size: 0.85rem;
+  }
+  .popular-currencies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .quick-btn {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--primary);
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .quick-btn:hover,
+  .quick-btn.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  /* Tom Select overrides */
+  .ts-wrapper .ts-control {
+    min-height: 52px;
+    border-radius: 12px !important;
+    border: 2px solid var(--border-color) !important;
+    font-size: 1rem;
+    padding: 8px 14px;
+  }
+  .ts-wrapper.focus .ts-control {
+    border-color: var(--primary-light) !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important;
+  }
+  .ts-dropdown { border-radius: 10px !important; margin-top: 4px; }
+</style>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+{% endblock %} {% block content %}
+<div class="container py-2">
+  <!-- Header -->
+  <div
+    class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4 fade-up"
+  >
+    <div>
+      <h2 class="section-title mb-0">
+        <i class="fas fa-coins me-2" style="color: var(--accent)"></i>Currency
+        Exchange
+      </h2>
+      <p class="text-muted small mb-0 mt-1">
+        Live exchange rates powered by
+        <a href="https://www.frankfurter.app" target="_blank"
+          >Frankfurter.app</a
+        >
+        (ECB data, updated daily).
+      </p>
+    </div>
+    <a
+      href="{% url 'country_info' %}"
+      class="btn btn-sm"
+      style="
+        background: var(--primary);
+        color: white;
+        border-radius: 9px;
+        padding: 7px 16px;
+        font-size: 0.83rem;
+        font-weight: 600;
+      "
+    >
+      <i class="fas fa-search me-1"></i> Country Info
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Calculator -->
+    <div class="col-lg-5">
+      <div class="card calc-card fade-up">
+        <div class="calc-header">
+          <h5 class="mb-0 fw-bold">
+            <i class="fas fa-calculator me-2"></i>Currency Calculator
+          </h5>
+          <div class="small mt-1 opacity-75">
+            Convert between {{ currency_codes|length }}+ world currencies
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <!-- Amount -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted"
+              >AMOUNT</label
+            >
+            <input
+              type="number"
+              id="amountInput"
+              class="form-control amount-input"
+              value="1"
+              min="0"
+              step="any"
+              placeholder="Enter amount"
+            />
+          </div>
+
+          <!-- From Currency -->
+          <div class="mb-2">
+            <label class="form-label fw-semibold small text-muted">FROM</label>
+            <select id="fromCurrency" class="form-select currency-select">
+              {% for code, info in currency_codes.items %}
+              <option value="{{ code }}" {% if code == "USD" %}selected{% endif %}>{{ code }} — {{ info.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Swap -->
+          <div class="text-center my-2">
+            <button class="swap-btn" id="swapBtn" title="Swap currencies">
+              <i class="fas fa-exchange-alt fa-rotate-90"></i>
+            </button>
+          </div>
+
+          <!-- To Currency -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold small text-muted">TO</label>
+            <select id="toCurrency" class="form-select currency-select">
+              {% for code, info in currency_codes.items %}
+              <option value="{{ code }}" {% if code == "EUR" %}selected{% endif %}>{{ code }} — {{ info.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Quick currency selector -->
+          <div class="mb-4">
+            <div class="small text-muted fw-semibold mb-2">
+              POPULAR CURRENCIES
+            </div>
+            <div class="popular-currencies" id="quickCurrencies">
+              <span
+                class="quick-btn"
+                data-code="USD"
+                onclick="setFromCurrency('USD')"
+                >USD</span
+              >
+              <span
+                class="quick-btn"
+                data-code="EUR"
+                onclick="setFromCurrency('EUR')"
+                >EUR</span
+              >
+              <span
+                class="quick-btn"
+                data-code="GBP"
+                onclick="setFromCurrency('GBP')"
+                >GBP</span
+              >
+              <span
+                class="quick-btn"
+                data-code="JPY"
+                onclick="setFromCurrency('JPY')"
+                >JPY</span
+              >
+              <span
+                class="quick-btn"
+                data-code="CNY"
+                onclick="setFromCurrency('CNY')"
+                >CNY</span
+              >
+              <span
+                class="quick-btn"
+                data-code="INR"
+                onclick="setFromCurrency('INR')"
+                >INR</span
+              >
+              <span
+                class="quick-btn"
+                data-code="CAD"
+                onclick="setFromCurrency('CAD')"
+                >CAD</span
+              >
+              <span
+                class="quick-btn"
+                data-code="AUD"
+                onclick="setFromCurrency('AUD')"
+                >AUD</span
+              >
+              <span
+                class="quick-btn"
+                data-code="CHF"
+                onclick="setFromCurrency('CHF')"
+                >CHF</span
+              >
+              <span
+                class="quick-btn"
+                data-code="SGD"
+                onclick="setFromCurrency('SGD')"
+                >SGD</span
+              >
+            </div>
+          </div>
+
+          <!-- Convert Button -->
+          <button
+            class="btn w-100"
+            id="convertBtn"
+            onclick="convertCurrency()"
+            style="
+              background: linear-gradient(135deg, #1e3a5f, #2563eb);
+              color: white;
+              height: 48px;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 0.95rem;
+            "
+          >
+            <i class="fas fa-sync-alt me-2"></i> Convert
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="col-lg-7">
+      <!-- Result banner -->
+      <div class="result-banner mb-4 fade-up" id="resultBanner">
+        <div class="small opacity-75 mb-1">RESULT</div>
+        <div class="result-amount" id="resultAmount">—</div>
+        <div class="result-label" id="resultLabel">
+          Enter an amount and click Convert
+        </div>
+        <div class="rate-note" id="rateNote"></div>
+      </div>
+
+      <!-- Rates table card -->
+      <div
+        class="card fade-up"
+        style="border-radius: 16px !important; overflow: hidden"
+      >
+        <div
+          class="d-flex align-items-center justify-content-between p-3 border-bottom"
+          style="background: #f8fafc"
+        >
+          <div
+            class="fw-semibold"
+            style="font-size: 0.9rem; color: var(--primary)"
+          >
+            <i class="fas fa-table me-2" style="color: var(--accent)"></i>
+            Live Exchange Rates — <span id="ratesBaseLabel">USD</span>
+          </div>
+          <span
+            class="badge"
+            style="background: var(--accent); font-size: 0.72rem"
+            id="ratesTimestamp"
+          ></span>
+        </div>
+        <div id="ratesContainer">
+          <div class="loading-overlay">
+            <div
+              class="spinner-border"
+              style="color: var(--primary)"
+              role="status"
+            ></div>
+            <div class="mt-3">Loading live rates…</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-muted small mt-2">
+        <i class="fas fa-info-circle me-1" style="color: var(--accent)"></i>
+        Rates are sourced from the <strong>European Central Bank</strong> via
+        Frankfurter.app and updated on each banking day. Not suitable for
+        financial transactions.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+  // Tom Select instances
+  var fromSelect = null, toSelect = null;
+  // ── Currency data from Django context ──
+  var CURRENCY_SYMBOLS = {
+      {% for code, info in currency_codes.items %}
+      "{{ code }}": "{{ info.symbol }}",
+      {% endfor %}
+  };
+
+  function sym(code) { return CURRENCY_SYMBOLS[code] || code; }
+
+  // ── Fetch rates table ──
+  function fetchRates(base) {
+      base = base || (fromSelect ? fromSelect.getValue() : document.getElementById('fromCurrency').value) || 'USD';
+      document.getElementById('ratesBaseLabel').textContent = base;
+      document.getElementById('ratesContainer').innerHTML =
+          '<div class="loading-overlay"><div class="spinner-border" style="color:var(--primary);" role="status"></div><div class="mt-3">Loading…</div></div>';
+
+      fetch('https://open.er-api.com/v6/latest/' + base)
+          .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+          .then(function(data){
+              if(data.result !== 'success') throw new Error(data.result);
+              renderRatesTable(base, data);
+          })
+          .catch(function(){
+              document.getElementById('ratesContainer').innerHTML =
+                  '<div class="p-3"><div class="error-msg"><i class="fas fa-exclamation-triangle me-2"></i>Could not load live rates. Please check your internet connection or try again later.</div></div>';
+          });
+  }
+
+  function renderRatesTable(base, data) {
+      if (!data.rates) {
+          document.getElementById('ratesContainer').innerHTML =
+              '<div class="p-3"><div class="error-msg">No rate data received.</div></div>';
+          return;
+      }
+
+      var rawDate = data.time_last_update_utc || '';
+      var date = rawDate ? rawDate.slice(0,16) : '';
+      if(date) document.getElementById('ratesTimestamp').textContent = 'As of ' + date;
+
+      var rates = data.rates || {};
+      var keys  = Object.keys(rates).sort();
+
+      var html = '<div style="overflow-x:auto;"><table class="table table-hover mb-0 rates-table"><thead><tr>';
+      html += '<th>Currency</th><th>Code</th><th style="text-align:right;">Rate (1 ' + base + ')</th>';
+      html += '</tr></thead><tbody>';
+
+      keys.forEach(function(code){
+          var rate = rates[code];
+          var symbol = sym(code);
+          html += '<tr onclick="setToCurrency(\'' + code + '\')" style="cursor:pointer;">';
+          html += '<td><span style="font-weight:600;">' + symbol + '</span> <span class="text-muted" style="font-size:0.8rem;">' + code + '</span></td>';
+          html += '<td><span class="rate-badge">' + code + '</span></td>';
+          html += '<td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;">' + rate.toFixed(4) + '</td>';
+          html += '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      document.getElementById('ratesContainer').innerHTML = html;
+  }
+
+  // ── Convert ──
+  function convertCurrency() {
+      var amount = parseFloat(document.getElementById('amountInput').value);
+      var from   = fromSelect ? fromSelect.getValue() : document.getElementById('fromCurrency').value;
+      var to     = toSelect   ? toSelect.getValue()   : document.getElementById('toCurrency').value;
+
+      if (isNaN(amount) || amount < 0) {
+          alert('Please enter a valid positive amount.');
+          return;
+      }
+
+      document.getElementById('resultAmount').textContent = '…';
+      document.getElementById('resultLabel').textContent  = 'Converting…';
+      document.getElementById('convertBtn').disabled = true;
+
+      if (from === to) {
+          document.getElementById('resultAmount').textContent = sym(to) + ' ' + amount.toFixed(2);
+          document.getElementById('resultLabel').textContent  = amount + ' ' + from + ' = ' + amount.toFixed(2) + ' ' + to;
+          document.getElementById('rateNote').textContent     = 'Exchange rate: 1 ' + from + ' = 1.0000 ' + to;
+          document.getElementById('convertBtn').disabled = false;
+          return;
+      }
+
+      fetch('https://open.er-api.com/v6/latest/' + from)
+          .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+          .then(function(data){
+              document.getElementById('convertBtn').disabled = false;
+              if(data.result !== 'success' || !data.rates) { document.getElementById('resultAmount').textContent = 'Error'; document.getElementById('resultLabel').textContent = 'Could not fetch rate.'; return; }
+              var rate   = data.rates[to];
+              var result = (amount * rate).toFixed(2);
+              document.getElementById('resultAmount').textContent = sym(to) + ' ' + Number(result).toLocaleString(undefined, {minimumFractionDigits:2});
+              document.getElementById('resultLabel').textContent  = amount.toLocaleString() + ' ' + from + ' = ' + Number(result).toLocaleString(undefined, {minimumFractionDigits:2}) + ' ' + to;
+              document.getElementById('rateNote').textContent     = '1 ' + from + ' = ' + rate.toFixed(4) + ' ' + to + ' · as of ' + (data.date || 'today');
+              fetchRates(from);
+          })
+          .catch(function(){
+              document.getElementById('convertBtn').disabled = false;
+              document.getElementById('resultAmount').textContent = 'Error';
+              document.getElementById('resultLabel').textContent  = 'Could not fetch live rate. Check connection.';
+          });
+  }
+
+  // ── Setters ──
+  function setFromCurrency(code) {
+      if(fromSelect) fromSelect.setValue(code, true); else document.getElementById('fromCurrency').value = code;
+      document.querySelectorAll('.quick-btn').forEach(function(b){ b.classList.remove('selected'); });
+      var btn = document.querySelector('.quick-btn[data-code="' + code + '"]');
+      if(btn) btn.classList.add('selected');
+      fetchRates(code);
+  }
+
+  function setToCurrency(code) {
+      if(toSelect) toSelect.setValue(code, true); else document.getElementById('toCurrency').value = code;
+  }
+
+  // ── Swap ──
+  document.getElementById('swapBtn').addEventListener('click', function(){
+      var f = fromSelect ? fromSelect.getValue() : document.getElementById('fromCurrency').value;
+      var t = toSelect   ? toSelect.getValue()   : document.getElementById('toCurrency').value;
+      if(fromSelect) fromSelect.setValue(t, true); else document.getElementById('fromCurrency').value = t;
+      if(toSelect)   toSelect.setValue(f, true);   else document.getElementById('toCurrency').value   = f;
+      fetchRates(t);
+  });
+
+  // ── On currency change ──
+  // (handled by Tom Select onChange callbacks below)
+
+  // ── Trigger convert on Enter ──
+  document.getElementById('amountInput').addEventListener('keydown', function(e){
+      if(e.key === 'Enter') convertCurrency();
+  });
+
+  // ── Init: auto-convert on load ──
+  window.addEventListener('DOMContentLoaded', function(){
+      // Initialise Tom Select on both dropdowns
+      fromSelect = new TomSelect('#fromCurrency', {
+          sortField: 'text',
+          maxOptions: 200,
+          onChange: function(value) { fetchRates(value); }
+      });
+      toSelect = new TomSelect('#toCurrency', {
+          sortField: 'text',
+          maxOptions: 200
+      });
+      // Highlight default quick button
+      var usdBtn = document.querySelector('.quick-btn[data-code="USD"]');
+      if(usdBtn) usdBtn.classList.add('selected');
+      fetchRates('USD');
+      convertCurrency();
+  });
+</script>
+{% endblock %}

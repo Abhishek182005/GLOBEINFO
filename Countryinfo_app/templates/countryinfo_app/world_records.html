@@ -330,11 +330,10 @@
             <th>#</th>
             <th>Country</th>
             <th>Population</th>
-            <th class="d-none d-md-table-cell">Visual</th>
           </tr>
         </thead>
         <tbody>
-          {% with max_pop=1441719852 %} {% for r in records.most_populous %}
+          {% for r in records.most_populous %}
           <tr>
             <td>
               <span
@@ -359,16 +358,8 @@
               >
             </td>
             <td><span class="val-chip">{{ r.value }}</span></td>
-            <td class="d-none d-md-table-cell" style="min-width: 160px">
-              <div class="bar-outer">
-                <div
-                  class="bar-inner"
-                  style="width:{{ r.rank|add:'-1' }}0%;"
-                ></div>
-              </div>
-            </td>
           </tr>
-          {% endfor %} {% endwith %}
+          {% endfor %}
         </tbody>
       </table>
     </div>
@@ -628,10 +619,31 @@
   <!-- ── Notable Natural Records grid ── -->
   <section class="rec-section fade-up">
     <div class="rec-section-title">
-      <i class="fas fa-star"></i>Notable Natural &amp; Man-Made Records
+      <i class="fas fa-leaf"></i>Notable Natural Records
     </div>
     <div class="row g-3">
-      {% for item in records.notable_records %}
+      {% for item in records.notable_natural_records %}
+      <div class="col-6 col-md-4 col-lg-3 col-xxl-2">
+        <div class="notable-card">
+          <div class="notable-icon">
+            <i class="fas {{ item.icon }}" style="color:{{ item.color }};"></i>
+          </div>
+          <div class="notable-title">{{ item.title }}</div>
+          <div class="notable-value">{{ item.value }}</div>
+          <div class="notable-detail text-muted">{{ item.detail }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── Notable Man-Made Records grid ── -->
+  <section class="rec-section fade-up">
+    <div class="rec-section-title">
+      <i class="fas fa-hard-hat"></i>Notable Man-Made Records
+    </div>
+    <div class="row g-3">
+      {% for item in records.notable_manmade_records %}
       <div class="col-6 col-md-4 col-lg-3 col-xxl-2">
         <div class="notable-card">
           <div class="notable-icon">
